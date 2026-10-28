@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.fcs
+*.zip
+.DS_Store
+Thumbs.db
+Resultados_Exportados/
+Resultados_*/
+.venv/
+venv/
+last_session_config.json
