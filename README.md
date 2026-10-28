@@ -19,7 +19,7 @@
 ## 📌 ¿Qué es Poralytix?
 
 Poralytix es una estación de trabajo científica para estudiar la **actividad citolítica de péptidos**
-(p. ej. *Act8-13*, *Act8-20*, *Satanin 1*, *CZS5*) mediante ensayos cinéticos de **retención/fuga de
+(p. ej. *Péptido ejemplo*, *Act8-20*, *Satanin 1*, *CZS5*) mediante ensayos cinéticos de **retención/fuga de
 calceína (FITC)** adquiridos por citometría de flujo.
 
 A partir de archivos `.fcs` crudos, Poralytix reconstruye la cinética evento a evento y responde
@@ -42,7 +42,7 @@ las preguntas clave del ensayo:
 
 ## 🔬 Resultados que produce
 
-Ejemplo real de salida para **Act8-13** sobre **THP-1** (diana) y **PBMCs** (control sano),
+Ejemplo real de salida para **Péptido ejemplo** sobre **THP-1** (diana) y **PBMCs** (control sano),
 dosis de 0.50 a 4.33 µM, ventana de −60 a 600 s y bins de 15 s.
 
 ### 1. Clasificación de eventos con doble cut-off
@@ -73,7 +73,7 @@ Superposición de la permeabilización continua (A) y del % de eventos afectados
 
 ### Lectura de los resultados del ejemplo
 
-| Indicador | Resultado (Act8-13) |
+| Indicador | Resultado (Péptido ejemplo) |
 | :--- | :--- |
 | Umbral de actividad en THP-1 | Sin efecto a 0.50–1.08 µM; lisis significativa desde **2.16 µM** |
 | Permeabilización máxima (THP-1, 4.33 µM) | **~75 %** continua · **85 %** eventos V2L al final del ensayo |
@@ -209,7 +209,7 @@ Los metadatos se deducen del nombre del archivo, por ejemplo:
 
 | Archivo | Compuesto | Línea | Dosis | Rol | Réplica |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `THP1-813-0.5-1.fcs` | Act8-13 | THP-1 | 0.5 µM | Experimental | R1 |
+| `THP1-pep_ejemplo-0.5-1.fcs` | Péptido ejemplo | THP-1 | 0.5 µM | Experimental | R1 |
 | `PBMCs-CC-sat1-5.7-3.fcs` | Satanin 1 | PBMCs | 5.7 µM | Control basal | R3 |
 | `CZS5_THP1_9_CC_2.fcs` | CZS5 | THP-1 | 9 µM | Control basal | R2 |
 
