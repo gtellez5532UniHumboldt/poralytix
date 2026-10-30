@@ -22,7 +22,7 @@
 ## 📌 ¿Qué es Poralytix?
 
 Poralytix es una estación de trabajo científica para estudiar la **actividad citolítica de péptidos**
-(p. ej. *Péptido ejemplo*, *Act8-20*, *Satanin 1*, *CZS5*) mediante ensayos cinéticos de **retención/fuga de
+(p. ej. *Péptido ejemplo*) mediante ensayos cinéticos de **retención/fuga de
 calceína (FITC)** adquiridos por citometría de flujo.
 
 A partir de archivos `.fcs` crudos, Poralytix reconstruye la cinética evento a evento y responde
@@ -221,8 +221,7 @@ Los metadatos se deducen del nombre del archivo, por ejemplo:
 | Archivo | Compuesto | Línea | Dosis | Rol | Réplica |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `THP1-pep_ejemplo-0.5-1.fcs` | Péptido ejemplo | THP-1 | 0.5 µM | Experimental | R1 |
-| `PBMCs-CC-sat1-5.7-3.fcs` | Satanin 1 | PBMCs | 5.7 µM | Control basal | R3 |
-| `CZS5_THP1_9_CC_2.fcs` | CZS5 | THP-1 | 9 µM | Control basal | R2 |
+
 
 ---
 
