@@ -22,7 +22,7 @@
 ## 📌 What is Poralytix?
 
 Poralytix is a scientific workstation designed to study the **cytolytic activity of peptides**
-(e.g., *Sample peptide*, *Act8-20*, *Satanin 1*, *CZS5*) using kinetic assays of **calcein (FITC) retention and leakage**
+(e.g., *Sample peptide*) using kinetic assays of **calcein (FITC) retention and leakage**
 acquired via flow cytometry.
 
 Starting from raw `.fcs` files, Poralytix reconstructs kinetics event-by-event, answering core biological questions:
@@ -221,8 +221,7 @@ Metadata fields are deduced automatically from filenames:
 | Filename | Compound | Cell Line | Dose | Role | Replicate |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `THP1-sample_pep-0.5-1.fcs` | Sample peptide | THP-1 | 0.5 µM | Experimental | R1 |
-| `PBMCs-CC-sat1-5.7-3.fcs` | Satanin 1 | PBMCs | 5.7 µM | Baseline Control | R3 |
-| `CZS5_THP1_9_CC_2.fcs` | CZS5 | THP-1 | 9 µM | Baseline Control | R2 |
+
 
 ---
 
