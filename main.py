@@ -3,9 +3,11 @@
 Punto de Entrada Oficial (GUI) - Estación de Trabajo de Cinética de Citometría de Flujo (.fcs).
 Ejecutar con:
     py -3.11 main.py
+    py -3.11 main.py --lang en
 """
 import sys
 import os
+import argparse
 import traceback
 import tkinter as tk
 from tkinter import messagebox
@@ -16,12 +18,20 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 from cytoworkstation.gui.app import FlowCytometryKineticWorkstation
+from cytoworkstation.i18n import SUPPORTED_LANGUAGES
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Estación de Trabajo de Cinética de Citometría de Flujo (.fcs)")
+    parser.add_argument("--lang", choices=list(SUPPORTED_LANGUAGES.keys()), default="es",
+                        help="Idioma de la interfaz gráfica (es: Español, en: English)")
+    args, _ = parser.parse_known_args()
+
     try:
         root = tk.Tk()
         app = FlowCytometryKineticWorkstation(root)
+        if args.lang and args.lang != "es":
+            app.set_language(args.lang)
         root.mainloop()
     except Exception as exc:
         err_msg = traceback.format_exc()

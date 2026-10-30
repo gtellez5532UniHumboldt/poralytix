@@ -30,6 +30,7 @@ from ..config import (
     PEPTIDE_ALIASES, DOSE_RAMPS, GENERIC_RAMPS, CURVE_PALETTE, MAIN_COLORS,
     AVOGADRO, HAS_MPL, HAS_REPORTLAB
 )
+from ..i18n import t, get_current_language, set_current_language, SUPPORTED_LANGUAGES
 from ..io.fcs_parser import parse_fcs_native, get_fcs_channels, resolve_perm_channel
 from ..io.metadata import guess_metadata_from_filename
 from ..io.session import save_session_dict, load_session_dict
@@ -67,8 +68,12 @@ DEFAULT_OUTPUT_DIR = Path.cwd() / "Resultados_Cinetica_Calceina"
 
 class FlowCytometryKineticWorkstation:
     def __init__(self, root):
+        self.current_language = 'es'
+        set_current_language(self.current_language)
         self.root = root
-        self.root.title("Estación de Trabajo de Cinética de Permeabilización Celular (Calceína-AM | .fcs)")
+        self.var_language_code = tk.StringVar(value="es")
+        self.var_language = tk.StringVar(value="Español")
+        self.root.title(t("app_window_title"))
 
         sw = self.root.winfo_screenwidth()
         sh = self.root.winfo_screenheight()
@@ -104,106 +109,234 @@ class FlowCytometryKineticWorkstation:
         self.root.lift()
         self.root.focus_force()
 
-    def _build_main_layout(self):
-        # Barra de Menú Principal Nativa (Sesión/Configuración, Modelos Matemáticos y Guía de Uso)
+    def _setup_menubar(self):
         self.menubar = tk.Menu(self.root)
 
+        # 1. Sesión y Configuración
         menu_session = tk.Menu(self.menubar, tearoff=0)
         menu_session.add_command(
-            label="💾 Guardar / Exportar Sesión de Trabajo (.json)...    [Ctrl+S]",
+            label=t("menu_session_save"),
             command=self.save_session_to_file
         )
         menu_session.add_command(
-            label="📂 Cargar / Importar Sesión de Trabajo (.json)...     [Ctrl+O]",
+            label=t("menu_session_load"),
             command=self.load_session_from_file
         )
         menu_session.add_separator()
         menu_session.add_command(
-            label="⚡ Guardado Rápido en Workspace (last_session_config.json)",
+            label=t("menu_session_quicksave"),
             command=self.quick_save_session
         )
         menu_session.add_command(
-            label="🔄 Restaurar Última Sesión Guardada (last_session_config.json)",
+            label=t("menu_session_quickload"),
             command=self.quick_load_session
         )
         menu_session.add_separator()
         menu_session.add_command(
-            label="📋 Exportar Tabla de Cut-Offs por Muestra (.csv)...",
+            label=t("menu_session_export_cutoffs"),
             command=self.export_sample_cutoffs_csv
         )
         menu_session.add_separator()
-        menu_session.add_command(label="🚪 Salir", command=self.root.destroy)
-        self.menubar.add_cascade(label="💾 Sesión y Configuración", menu=menu_session)
+        menu_session.add_command(label=t("menu_session_exit"), command=self.root.destroy)
+        self.menubar.add_cascade(label=t("menu_session"), menu=menu_session)
 
+        # 2. Modelos Matemáticos y Cálculos
         menu_models = tk.Menu(self.menubar, tearoff=0)
         menu_models.add_command(
-            label="📐 1. Modelos Farmacodinámicos y Cinéticos (Hill, Michaelis-Menten, Gompertz, Weibull, Bi-Exp)",
+            label=t("menu_models_1"),
             command=lambda: self.open_mathematical_models_help_dialog(initial_tab=0)
         )
         menu_models.add_command(
-            label="🔬 2. Gating (V1L/V1R), Cut-Off de Histograma (V2L/V2R) y Extracción Cinética Continua",
+            label=t("menu_models_2"),
             command=lambda: self.open_mathematical_models_help_dialog(initial_tab=1)
         )
         menu_models.add_command(
-            label="⏱️ 3. Hitos de Tiempo (T50 Efecto vs LT50, ΔT10-90), Entropía de Shannon, Hazard y Bimodalidad",
+            label=t("menu_models_3"),
             command=lambda: self.open_mathematical_models_help_dialog(initial_tab=2)
         )
         menu_models.add_command(
-            label="📊 4. Pruebas Estadísticas (Fisher, χ², h de Cohen, Wilson IC95%, Cochran-Armitage, Welch + FDR)",
+            label=t("menu_models_4"),
             command=lambda: self.open_mathematical_models_help_dialog(initial_tab=3)
         )
-        self.menubar.add_cascade(label="❓ Ayuda: Modelos Matemáticos y Cálculos", menu=menu_models)
+        self.menubar.add_cascade(label=t("menu_models"), menu=menu_models)
 
+        # 3. Guía de Uso del Software
         menu_guide = tk.Menu(self.menubar, tearoff=0)
         menu_guide.add_command(
-            label="📖 Guía Paso a Paso de Uso del Software    [F1]",
+            label=t("menu_guide_steps"),
             command=self.open_user_guide_dialog
         )
         menu_guide.add_separator()
         menu_guide.add_command(
-            label="📄 Exportar Guía de Uso y Manual Matemático Completo (.md)...",
+            label=t("menu_guide_export"),
             command=self.export_markdown_guide_file
         )
-        self.menubar.add_cascade(label="📖 Guía de Uso del Software", menu=menu_guide)
+        self.menubar.add_cascade(label=t("menu_guide"), menu=menu_guide)
+
+        # 4. Idioma / Language
+        menu_lang = tk.Menu(self.menubar, tearoff=0)
+        menu_lang.add_radiobutton(
+            label=t("lang_es"),
+            value="es",
+            variable=self.var_language_code,
+            command=lambda: self.set_language("es")
+        )
+        menu_lang.add_radiobutton(
+            label=t("lang_en"),
+            value="en",
+            variable=self.var_language_code,
+            command=lambda: self.set_language("en")
+        )
+        self.menubar.add_cascade(label=t("menu_language"), menu=menu_lang)
 
         self.root.config(menu=self.menubar)
+
+    def _on_language_combobox_changed(self, event=None):
+        val = self.cmb_language.get().strip()
+        new_lang = "es" if "Español" in val else "en"
+        self.set_language(new_lang)
+
+    def set_language(self, lang_code):
+        if lang_code not in SUPPORTED_LANGUAGES:
+            return
+        self.current_language = lang_code
+        set_current_language(lang_code)
+        self.var_language_code.set(lang_code)
+        self.var_language.set("Español" if lang_code == "es" else "English")
+
+        # 1. Ventana y Top Bar
+        self.root.title(t("app_window_title"))
+        if hasattr(self, 'lbl_top_title'):
+            self.lbl_top_title.config(text=t("app_top_title"))
+        if hasattr(self, 'lbl_top_lang'):
+            self.lbl_top_lang.config(text=t("lang_label"))
+        if hasattr(self, 'btn_top_save'):
+            self.btn_top_save.config(text=t("btn_save_session"))
+        if hasattr(self, 'btn_top_load'):
+            self.btn_top_load.config(text=t("btn_load_session"))
+        if hasattr(self, 'btn_top_math'):
+            self.btn_top_math.config(text=t("btn_math_models"))
+        if hasattr(self, 'btn_top_guide'):
+            self.btn_top_guide.config(text=t("btn_user_guide"))
+        if hasattr(self, 'lbl_global_status'):
+            self.lbl_global_status.config(text=t("status_ready"))
+
+        # 2. Reconstruir Menú
+        self._setup_menubar()
+
+        # 3. Pestañas
+        if hasattr(self, 'notebook') and hasattr(self, 'tab_ingest'):
+            self.notebook.tab(self.tab_ingest, text=t("tab_1_title"))
+            self.notebook.tab(self.tab_preanalysis, text=t("tab_2_title"))
+            self.notebook.tab(self.tab_catpanel, text=t("tab_3_title"))
+            self.notebook.tab(self.tab_prereport, text=t("tab_4_title"))
+            self.notebook.tab(self.tab_finalreport, text=t("tab_5_title"))
+
+        # 4. Pestaña 1
+        if hasattr(self, 'lblfrm_guide'):
+            self.lblfrm_guide.config(text=t("tab1_guide_title"))
+        if hasattr(self, 'lbl_guide_txt'):
+            self.lbl_guide_txt.config(text=t("tab1_guide_body"))
+        if hasattr(self, 'lblfrm_cfg'):
+            self.lblfrm_cfg.config(text=t("tab1_params_title"))
+        if hasattr(self, 'lbl_target_cell'):
+            self.lbl_target_cell.config(text=t("tab1_target_cell"))
+        if hasattr(self, 'lbl_control_cell'):
+            self.lbl_control_cell.config(text=t("tab1_control_cell"))
+        if hasattr(self, 'lbl_density'):
+            self.lbl_density.config(text=t("tab1_density"))
+        if hasattr(self, 'lbl_perm_channel'):
+            self.lbl_perm_channel.config(text=t("tab1_perm_channel"))
+        if hasattr(self, 'lblfrm_btn_files'):
+            self.lblfrm_btn_files.config(text=t("tab1_files_title"))
+        if hasattr(self, 'btn_upload_files'):
+            self.btn_upload_files.config(text=t("tab1_btn_upload_files"))
+        if hasattr(self, 'btn_upload_folder'):
+            self.btn_upload_folder.config(text=t("tab1_btn_upload_folder"))
+        if hasattr(self, 'btn_demo_dataset'):
+            self.btn_demo_dataset.config(text=t("tab1_btn_demo"))
+        if hasattr(self, 'btn_batch_edit'):
+            self.btn_batch_edit.config(text=t("tab1_btn_batch_edit"))
+        if hasattr(self, 'btn_remove_selected'):
+            self.btn_remove_selected.config(text=t("tab1_btn_remove_selected"))
+        if hasattr(self, 'btn_clear_all'):
+            self.btn_clear_all.config(text=t("tab1_btn_clear_all"))
+        if hasattr(self, 'btn_run_preanalysis'):
+            self.btn_run_preanalysis.config(text=t("tab1_btn_run_preanalysis"))
+        if hasattr(self, 'lblfrm_tbl'):
+            self.lblfrm_tbl.config(text=t("tab1_tbl_title"))
+
+        # 5. Encabezados de tabla de archivos
+        if hasattr(self, 'tree'):
+            self.tree.heading("Filename", text=t("col_filename"))
+            self.tree.heading("Compound", text=t("col_compound"))
+            self.tree.heading("Cell_Line", text=t("col_cell_line"))
+            self.tree.heading("Sample_Role", text=t("col_sample_role"))
+            self.tree.heading("Concentration_uM", text=t("col_concentration"))
+            self.tree.heading("Replicate", text=t("col_replicate"))
+            self.tree.heading("Exclusion_s", text=t("col_exclusion"))
+
+    def _build_main_layout(self):
+        self._setup_menubar()
+
         self.root.bind("<Control-s>", lambda e: self.save_session_to_file())
         self.root.bind("<Control-o>", lambda e: self.load_session_from_file())
         self.root.bind("<F1>", lambda e: self.open_user_guide_dialog())
 
         top_bar = tk.Frame(self.root, bg="#002B49", pady=5, padx=10)
         top_bar.pack(fill="x")
-        tk.Label(
+        self.lbl_top_title = tk.Label(
             top_bar,
-            text="🧬 WORKSTATION DE CINÉTICA DE PERMEABILIZACIÓN (.fcs) — Preanálisis, Cut-Offs por Muestra, Modelos y Auditoría",
+            text=t("app_top_title"),
             bg="#002B49", fg="white", font=("DejaVu Sans", 9, "bold")
-        ).pack(side="left")
+        )
+        self.lbl_top_title.pack(side="left")
 
         btn_bar = tk.Frame(top_bar, bg="#002B49")
         btn_bar.pack(side="right", padx=4)
-        tk.Button(
-            btn_bar, text="💾 Guardar Sesión", bg="#117864", fg="white",
+
+        self.lbl_top_lang = tk.Label(
+            btn_bar, text=t("lang_label"), bg="#002B49", fg="#A3E4D7", font=("DejaVu Sans", 8, "bold")
+        )
+        self.lbl_top_lang.pack(side="left", padx=(4, 2))
+
+        self.cmb_language = ttk.Combobox(
+            btn_bar, textvariable=self.var_language, state="readonly", width=8,
+            values=["Español", "English"]
+        )
+        self.cmb_language.pack(side="left", padx=2)
+        self.cmb_language.bind("<<ComboboxSelected>>", self._on_language_combobox_changed)
+
+        self.btn_top_save = tk.Button(
+            btn_bar, text=t("btn_save_session"), bg="#117864", fg="white",
             font=("DejaVu Sans", 8, "bold"), padx=6, pady=1,
             command=self.save_session_to_file
-        ).pack(side="left", padx=2)
-        tk.Button(
-            btn_bar, text="📂 Cargar Sesión", bg="#1F618D", fg="white",
+        )
+        self.btn_top_save.pack(side="left", padx=2)
+
+        self.btn_top_load = tk.Button(
+            btn_bar, text=t("btn_load_session"), bg="#1F618D", fg="white",
             font=("DejaVu Sans", 8, "bold"), padx=6, pady=1,
             command=self.load_session_from_file
-        ).pack(side="left", padx=2)
-        tk.Button(
-            btn_bar, text="📐 Modelos y Cálculos", bg="#6C3483", fg="white",
+        )
+        self.btn_top_load.pack(side="left", padx=2)
+
+        self.btn_top_math = tk.Button(
+            btn_bar, text=t("btn_math_models"), bg="#6C3483", fg="white",
             font=("DejaVu Sans", 8, "bold"), padx=6, pady=1,
             command=lambda: self.open_mathematical_models_help_dialog(initial_tab=0)
-        ).pack(side="left", padx=2)
-        tk.Button(
-            btn_bar, text="📖 Guía de Uso", bg="#B9770E", fg="white",
+        )
+        self.btn_top_math.pack(side="left", padx=2)
+
+        self.btn_top_guide = tk.Button(
+            btn_bar, text=t("btn_user_guide"), bg="#B9770E", fg="white",
             font=("DejaVu Sans", 8, "bold"), padx=6, pady=1,
             command=self.open_user_guide_dialog
-        ).pack(side="left", padx=2)
+        )
+        self.btn_top_guide.pack(side="left", padx=2)
 
         self.lbl_global_status = tk.Label(
-            top_bar, text="Estado: Listo (Motor Nativo Activo)",
+            top_bar, text=t("status_ready"),
             bg="#002B49", fg="#A3E4D7", font=("DejaVu Sans", 8, "bold")
         )
         self.lbl_global_status.pack(side="right", padx=8)
@@ -217,11 +350,11 @@ class FlowCytometryKineticWorkstation:
         self.tab_prereport = ttk.Frame(self.notebook)
         self.tab_finalreport = ttk.Frame(self.notebook)
 
-        self.notebook.add(self.tab_ingest, text=" 📁 1. Carga de Datos y Guía ")
-        self.notebook.add(self.tab_preanalysis, text=" 🔍 2. Pre-Análisis Dinámico (FITC / FSC / SSC) ")
-        self.notebook.add(self.tab_catpanel, text=" 🧬 3. Panel Categórico (Afectados vs No Afectados y Ventanas) ")
-        self.notebook.add(self.tab_prereport, text=" 📊 4. Pre-Reporte, Modelos Cinéticos y Estadística ")
-        self.notebook.add(self.tab_finalreport, text=" 📄 5. Reporte Final y Exportación (600 DPI / PDF) ")
+        self.notebook.add(self.tab_ingest, text=t("tab_1_title"))
+        self.notebook.add(self.tab_preanalysis, text=t("tab_2_title"))
+        self.notebook.add(self.tab_catpanel, text=t("tab_3_title"))
+        self.notebook.add(self.tab_prereport, text=t("tab_4_title"))
+        self.notebook.add(self.tab_finalreport, text=t("tab_5_title"))
 
         self._build_tab1_ingest()
         self._build_tab2_preanalysis()
@@ -233,72 +366,82 @@ class FlowCytometryKineticWorkstation:
     # PESTAÑA 1: CARGA DE DATOS, GUÍA DE NOMENCLATURA Y EDICIÓN DE METADATOS
     # --------------------------------------------------------------------------
     def _build_tab1_ingest(self):
-        guide_frame = ttk.LabelFrame(
+        self.lblfrm_guide = ttk.LabelFrame(
             self.tab_ingest,
-            text=" 💡 Guía de Nomenclatura de Archivos .fcs para Autodetección Inmediata ",
+            text=t("tab1_guide_title"),
             padding=8
         )
-        guide_frame.pack(fill="x", padx=10, pady=5)
+        self.lblfrm_guide.pack(fill="x", padx=10, pady=5)
 
-        guide_txt = (
-            "Formato recomendado:   [Compuesto]_[LineaCelular]_[Concentracion_uM]_[CC_opcional]_[Replica].fcs\n"
-            "  • Control Basal Previo (-60 a 0 s): Incluir 'CC' o 'BASE'  ➔  Ej:  820_THP-1_CC_4.35_1.fcs   o   Sat1_PBMC_CC_5.70_R1.fcs\n"
-            "  • Muestra Experimental (0 a 600 s): Sin 'CC' en el nombre  ➔  Ej:  820_THP-1_4.35_1.fcs      o   Sat1_THP-1_2.80_R2.fcs\n"
-            "Nota: Si tus archivos tienen otros nombres, puedes editar cualquier celda con Doble Clic en la tabla inferior."
+        self.lbl_guide_txt = ttk.Label(
+            self.lblfrm_guide, text=t("tab1_guide_body"),
+            foreground="#1B4F72", font=("DejaVu Sans", 9)
         )
-        ttk.Label(guide_frame, text=guide_txt, foreground="#1B4F72", font=("DejaVu Sans", 9)).pack(anchor="w")
+        self.lbl_guide_txt.pack(anchor="w")
 
-        cfg_frame = ttk.LabelFrame(
+        self.lblfrm_cfg = ttk.LabelFrame(
             self.tab_ingest,
-            text=" Parámetros Celulares Globales y Selección del Canal de Fluorescencia ",
+            text=t("tab1_params_title"),
             padding=8
         )
-        cfg_frame.pack(fill="x", padx=10, pady=4)
+        self.lblfrm_cfg.pack(fill="x", padx=10, pady=4)
 
-        ttk.Label(cfg_frame, text="Célula Diana (Target):").grid(row=0, column=0, sticky="w", padx=5, pady=3)
-        self.ent_target = ttk.Entry(cfg_frame, width=16)
+        self.lbl_target_cell = ttk.Label(self.lblfrm_cfg, text=t("tab1_target_cell"))
+        self.lbl_target_cell.grid(row=0, column=0, sticky="w", padx=5, pady=3)
+        self.ent_target = ttk.Entry(self.lblfrm_cfg, width=16)
         self.ent_target.insert(0, "THP-1")
         self.ent_target.grid(row=0, column=1, sticky="w", padx=5, pady=3)
 
-        ttk.Label(cfg_frame, text="Célula Control Sano:").grid(row=0, column=2, sticky="w", padx=5, pady=3)
-        self.ent_control = ttk.Entry(cfg_frame, width=16)
+        self.lbl_control_cell = ttk.Label(self.lblfrm_cfg, text=t("tab1_control_cell"))
+        self.lbl_control_cell.grid(row=0, column=2, sticky="w", padx=5, pady=3)
+        self.ent_control = ttk.Entry(self.lblfrm_cfg, width=16)
         self.ent_control.insert(0, "PBMCs")
         self.ent_control.grid(row=0, column=3, sticky="w", padx=5, pady=3)
 
-        ttk.Label(cfg_frame, text="Densidad Celular (cél/mL):").grid(row=0, column=4, sticky="w", padx=5, pady=3)
-        self.ent_density = ttk.Entry(cfg_frame, width=14)
+        self.lbl_density = ttk.Label(self.lblfrm_cfg, text=t("tab1_density"))
+        self.lbl_density.grid(row=0, column=4, sticky="w", padx=5, pady=3)
+        self.ent_density = ttk.Entry(self.lblfrm_cfg, width=14)
         self.ent_density.insert(0, "1.0e6")
         self.ent_density.grid(row=0, column=5, sticky="w", padx=5, pady=3)
 
-        ttk.Label(cfg_frame, text="Canal Permeabilidad:", font=("DejaVu Sans", 9, "bold")).grid(row=0, column=6, sticky="w", padx=5, pady=3)
+        self.lbl_perm_channel = ttk.Label(self.lblfrm_cfg, text=t("tab1_perm_channel"), font=("DejaVu Sans", 9, "bold"))
+        self.lbl_perm_channel.grid(row=0, column=6, sticky="w", padx=5, pady=3)
         self.var_perm_channel = tk.StringVar(value="FITC (Por defecto)")
         self.cmb_tab1_channel = ttk.Combobox(
-            cfg_frame, textvariable=self.var_perm_channel, state="readonly", width=22,
+            self.lblfrm_cfg, textvariable=self.var_perm_channel, state="readonly", width=22,
             values=["FITC (Por defecto)", "FITC-A", "FL1-A", "FITC-H", "FL1-H", "BL1-A"]
         )
         self.cmb_tab1_channel.grid(row=0, column=7, sticky="w", padx=5, pady=3)
 
-        btn_frame = ttk.LabelFrame(self.tab_ingest, text=" Gestión de Archivos Binarios (.fcs) ", padding=8)
-        btn_frame.pack(fill="x", padx=10, pady=4)
+        self.lblfrm_btn_files = ttk.LabelFrame(self.tab_ingest, text=t("tab1_files_title"), padding=8)
+        self.lblfrm_btn_files.pack(fill="x", padx=10, pady=4)
 
-        ttk.Button(btn_frame, text="➕ Subir Archivos .fcs", command=self.add_fcs_files).pack(side="left", padx=4)
-        ttk.Button(btn_frame, text="📁 Subir Carpeta Completa", command=self.add_fcs_folder).pack(side="left", padx=4)
-        ttk.Button(btn_frame, text="🧪 Generar y Cargar Set Demo (.fcs)", command=self.load_demo_dataset).pack(side="left", padx=4)
-        ttk.Button(btn_frame, text="✏️ Editar en Lote Seleccionados", command=self.batch_edit_selected).pack(side="left", padx=4)
-        ttk.Button(btn_frame, text="🗑️ Quitar Seleccionados", command=self.remove_selected).pack(side="left", padx=4)
-        ttk.Button(btn_frame, text="🧹 Limpiar Tabla", command=self.clear_all).pack(side="left", padx=4)
+        self.btn_upload_files = ttk.Button(self.lblfrm_btn_files, text=t("tab1_btn_upload_files"), command=self.add_fcs_files)
+        self.btn_upload_files.pack(side="left", padx=4)
+        self.btn_upload_folder = ttk.Button(self.lblfrm_btn_files, text=t("tab1_btn_upload_folder"), command=self.add_fcs_folder)
+        self.btn_upload_folder.pack(side="left", padx=4)
+        self.btn_demo_dataset = ttk.Button(self.lblfrm_btn_files, text=t("tab1_btn_demo"), command=self.load_demo_dataset)
+        self.btn_demo_dataset.pack(side="left", padx=4)
+        self.btn_batch_edit = ttk.Button(self.lblfrm_btn_files, text=t("tab1_btn_batch_edit"), command=self.batch_edit_selected)
+        self.btn_batch_edit.pack(side="left", padx=4)
+        self.btn_remove_selected = ttk.Button(self.lblfrm_btn_files, text=t("tab1_btn_remove_selected"), command=self.remove_selected)
+        self.btn_remove_selected.pack(side="left", padx=4)
+        self.btn_clear_all = ttk.Button(self.lblfrm_btn_files, text=t("tab1_btn_clear_all"), command=self.clear_all)
+        self.btn_clear_all.pack(side="left", padx=4)
 
-        tk.Button(
-            btn_frame, text="🔍 EJECUTAR PRE-ANÁLISIS Y VER GRÁFICAS ➔",
+        self.btn_run_preanalysis = tk.Button(
+            self.lblfrm_btn_files, text=t("tab1_btn_run_preanalysis"),
             bg="#004488", fg="white", font=("DejaVu Sans", 9, "bold"),
             padx=12, pady=4, command=self.run_preanalysis_ingestion
-        ).pack(side="right", padx=6)
+        )
+        self.btn_run_preanalysis.pack(side="right", padx=6)
 
-        tbl_frame = ttk.LabelFrame(
+        self.lblfrm_tbl = ttk.LabelFrame(
             self.tab_ingest,
-            text=" Tabla de Muestras (Doble clic en cualquier celda para editar Compuesto, Célula, Rol CC, Concentración µM, Réplica o Exclusión t_start) ",
+            text=t("tab1_tbl_title"),
             padding=8
         )
+        tbl_frame = self.lblfrm_tbl
         tbl_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         columns = ("Filename", "Compound", "Cell_Line", "Sample_Role", "Concentration_uM", "Replicate", "Exclusion_s")
@@ -2207,56 +2350,23 @@ class FlowCytometryKineticWorkstation:
         """Abre un diálogo modal para editar cómodamente todos los Cut-Offs y T_lag/T_max de la muestra seleccionada."""
         sel = self.tree_sample_cutoffs.selection()
         if not sel:
-            messagebox.showinfo("Seleccionar Muestra", "Selecciona primero una fila en la Tabla de Cut-Offs por Muestra.", parent=self.root)
+            title = "Seleccionar Muestra" if self.current_language == 'es' else "Select Sample"
+            msg = ("Selecciona primero una fila en la Tabla de Cut-Offs por Muestra."
+                   if self.current_language == 'es' else
+                   "Please select a row in the Sample Cut-Offs Table first.")
+            messagebox.showinfo(title, msg, parent=self.root)
             return
         row_id = sel[0]
         vals = self.tree_sample_cutoffs.item(row_id, "values")
         if not vals:
             return
 
-        dlg = tk.Toplevel(self.root)
-        dlg.title(f"Editar Cut-Offs de Muestra: {vals[0]}")
-        dlg.geometry("420x310")
-        dlg.transient(self.root)
-        dlg.grab_set()
-
-        frm = ttk.LabelFrame(dlg, text=f" Parámetros Individuales: {vals[0]} ", padding=10)
-        frm.pack(fill="both", expand=True, padx=10, pady=8)
-
-        fields = [
-            ("Exclusión Detritos V1L (< log10):", vals[2]),
-            ("Cut-Off Afectados V2L/V2R (log10):", vals[3]),
-            ("Umbral Morfológico FSC-A Mín (>):", vals[4]),
-            ("Umbral Morfológico SSC-A Mín (>):", vals[5]),
-            ("Inicio Fase Activa T_lag (s):", vals[6]),
-            ("Fin Fase Activa / Meseta T_max (s):", vals[7]),
-        ]
-        entries = []
-        for idx_f, (lbl_txt, init_v) in enumerate(fields):
-            ttk.Label(frm, text=lbl_txt, font=("DejaVu Sans", 8, "bold")).grid(row=idx_f, column=0, sticky="w", pady=4, padx=4)
-            ent = ttk.Entry(frm, width=14)
-            ent.insert(0, str(init_v))
-            ent.grid(row=idx_f, column=1, sticky="ew", pady=4, padx=4)
-            entries.append(ent)
-
-        def save_modal():
-            try:
-                v1l_v = float(entries[0].get().strip())
-                v2l_v = float(entries[1].get().strip())
-                fsc_v = float(entries[2].get().strip())
-                ssc_v = float(entries[3].get().strip())
-                tlag_v = float(entries[4].get().strip())
-                tmax_v = float(entries[5].get().strip())
-            except ValueError as err:
-                messagebox.showerror("Valor Inválido", f"Todos los campos deben ser numéricos:\n{err}", parent=dlg)
-                return
-            dlg.destroy()
-            self._apply_single_sample_cutoff_override(row_id, v1l_v, v2l_v, fsc_v, ssc_v, tlag_v, tmax_v, edited_col_idx=None)
-
-        btn_f = ttk.Frame(frm)
-        btn_f.grid(row=len(fields), column=0, columnspan=2, pady=10)
-        tk.Button(btn_f, text="✅ Aplicar a Esta Muestra", bg="#117864", fg="white", font=("DejaVu Sans", 8, "bold"), padx=10, command=save_modal).pack(side="left", padx=4)
-        ttk.Button(btn_f, text="Cancelar", command=dlg.destroy).pack(side="left", padx=4)
+        init_vals = [vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]]
+        return open_sample_cutoff_editor_dialog(
+            self.root, row_id, vals[0], init_vals,
+            lambda rid, v1, v2, f, s, tl, tm: self._apply_single_sample_cutoff_override(rid, v1, v2, f, s, tl, tm, edited_col_idx=None),
+            lang=self.current_language
+        )
 
     def export_sample_cutoffs_csv(self):
         if not hasattr(self, 'tree_sample_cutoffs') or not self.tree_sample_cutoffs.get_children():
@@ -3983,6 +4093,7 @@ class FlowCytometryKineticWorkstation:
         return {
             'session_version': '2.0',
             'saved_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'language': self.current_language,
             'global_parameters': {
                 'target_cell': self.ent_target.get().strip(),
                 'control_cell': self.ent_control.get().strip(),
@@ -4022,6 +4133,9 @@ class FlowCytometryKineticWorkstation:
 
     def _apply_session_state_dict(self, state_dict, source_label="Sesión"):
         """Restaura el estado completo de una sesión guardada y recalcula todas las vistas y tablas."""
+        saved_lang = state_dict.get('language') or state_dict.get('global_parameters', {}).get('language')
+        if saved_lang and saved_lang in SUPPORTED_LANGUAGES:
+            self.set_language(saved_lang)
         g = state_dict.get('global_parameters', {})
 
         def _set_entry(ent_widget, val_str):
@@ -4473,43 +4587,7 @@ de conteos celulares reales:
 
     def open_mathematical_models_help_dialog(self, initial_tab=0):
         """Abre la ventana interactiva de Ayuda explicando todos los modelos matemáticos y cálculos."""
-        dlg = tk.Toplevel(self.root)
-        dlg.title("❓ Manual de Modelos Matemáticos, Ecuaciones Biofísicas y Cálculos Estadísticos")
-        dlg.geometry("980x680")
-        dlg.transient(self.root)
-
-        hdr = tk.Frame(dlg, bg="#002B49", pady=6, padx=12)
-        hdr.pack(fill="x")
-        tk.Label(
-            hdr,
-            text="📐 REFERENCIA MATEMÁTICA Y BIOESTADÍSTICA DE LA ESTACIÓN DE TRABAJO DE CITOMETRÍA",
-            bg="#002B49", fg="white", font=("DejaVu Sans", 10, "bold")
-        ).pack(side="left")
-        tk.Button(
-            hdr, text="📄 Exportar Manual en Markdown (.md)",
-            bg="#117864", fg="white", font=("DejaVu Sans", 8, "bold"),
-            command=self.export_markdown_guide_file
-        ).pack(side="right", padx=4)
-
-        nb = ttk.Notebook(dlg)
-        nb.pack(fill="both", expand=True, padx=10, pady=8)
-
-        sections = self._get_mathematical_models_reference_sections()
-        for tab_title, content_txt in sections:
-            frm = ttk.Frame(nb, padding=6)
-            nb.add(frm, text=f" {tab_title} ")
-            txt = tk.Text(frm, wrap="word", font=("Consolas", 9), bg="#FCFDFE", fg="#1C2833", padx=10, pady=8)
-            vsb = ttk.Scrollbar(frm, orient="vertical", command=txt.yview)
-            txt.configure(yscrollcommand=vsb.set)
-            txt.pack(side="left", fill="both", expand=True)
-            vsb.pack(side="right", fill="y")
-            txt.insert("1.0", content_txt)
-            txt.configure(state="disabled")
-
-        if 0 <= initial_tab < len(sections):
-            nb.select(initial_tab)
-
-        return dlg
+        return open_mathematical_models_help_dialog(self.root, initial_tab=initial_tab, lang=self.current_language)
 
     # --------------------------------------------------------------------------
     # GUÍA DE USO DEL SOFTWARE (INTERACTIVA + EXPORTACIÓN A MARKDOWN)
@@ -4642,39 +4720,7 @@ El Panel 2 está dividido en 4 cajas de control a la izquierda y 4 lienzos inter
 
     def open_user_guide_dialog(self):
         """Abre la ventana interactiva con la Guía Paso a Paso de Uso del Software."""
-        dlg = tk.Toplevel(self.root)
-        dlg.title("📖 Guía Paso a Paso de Uso del Software de Cinética de Citometría")
-        dlg.geometry("960x660")
-        dlg.transient(self.root)
-
-        hdr = tk.Frame(dlg, bg="#002B49", pady=6, padx=12)
-        hdr.pack(fill="x")
-        tk.Label(
-            hdr,
-            text="📖 GUÍA PRÁCTICA DE USO DEL SOFTWARE — FLUJO DE TRABAJO COMPLETO (PESTAÑAS 1 A 5)",
-            bg="#002B49", fg="white", font=("DejaVu Sans", 10, "bold")
-        ).pack(side="left")
-        tk.Button(
-            hdr, text="📄 Exportar Guía Completa en Markdown (.md)",
-            bg="#117864", fg="white", font=("DejaVu Sans", 8, "bold"),
-            command=self.export_markdown_guide_file
-        ).pack(side="right", padx=4)
-
-        nb = ttk.Notebook(dlg)
-        nb.pack(fill="both", expand=True, padx=10, pady=8)
-
-        for tab_title, content_txt in self._get_user_guide_sections():
-            frm = ttk.Frame(nb, padding=6)
-            nb.add(frm, text=f" {tab_title} ")
-            txt = tk.Text(frm, wrap="word", font=("Consolas", 9), bg="#FCFDFE", fg="#1C2833", padx=10, pady=8)
-            vsb = ttk.Scrollbar(frm, orient="vertical", command=txt.yview)
-            txt.configure(yscrollcommand=vsb.set)
-            txt.pack(side="left", fill="both", expand=True)
-            vsb.pack(side="right", fill="y")
-            txt.insert("1.0", content_txt)
-            txt.configure(state="disabled")
-
-        return dlg
+        return open_user_guide_dialog(self.root, lang=self.current_language)
 
     def export_markdown_guide_file(self, fpath=None, silent=False):
         """Exporta un documento Markdown completo con la Guía de Uso y el Manual de Modelos Matemáticos."""

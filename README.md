@@ -6,8 +6,11 @@
 
 *pore + analytics* — Cuantifica cuándo, cuánto y con qué selectividad un péptido abre poros en la membrana celular.
 
+[![Español](https://img.shields.io/badge/Idioma-Espa%C3%B1ol-brightgreen)](README.md)
+[![English](https://img.shields.io/badge/Language-English-blue)](README_EN.md)
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![Versión](https://img.shields.io/badge/versión-2.0.0-2E86C1)
+![i18n](https://img.shields.io/badge/i18n-ES%20%7C%20EN-9B59B6)
 ![GUI](https://img.shields.io/badge/GUI-Tkinter-117733)
 ![CLI](https://img.shields.io/badge/CLI-batch%20headless-5D3A9B)
 ![Exportación](https://img.shields.io/badge/figuras-600%20DPI-E66100)
@@ -113,6 +116,7 @@ poralytix/
 ├── requirements.txt
 ├── cytoworkstation/            # Paquete principal
 │   ├── config.py               # Alias de péptidos, paletas cromáticas, canales y constantes
+│   ├── i18n.py                 # Motor de internacionalización bilingüe (Español / English)
 │   ├── io/
 │   │   ├── fcs_parser.py       # Parser binario FCS 2.0 / 3.0 / 3.1 sin dependencias externas
 │   │   ├── metadata.py         # Deducción de compuesto, línea celular, dosis, réplica y rol
@@ -171,11 +175,18 @@ Dependencias: `numpy`, `scipy`, `pandas`, `matplotlib`, `reportlab`.
 
 ## 🚀 Uso
 
-### Interfaz gráfica
+### Interfaz gráfica (Bilingüe Español / English)
 
 ```powershell
+# Iniciar en Español (por defecto)
 py -3.11 main.py
+
+# Iniciar directamente en Inglés
+py -3.11 main.py --lang en
 ```
+
+> [!TIP]
+> Puedes alternar dinámicamente entre **Español** e **Inglés** en cualquier momento desde el selector desplegable `🌐 Idioma` en la barra superior o desde el menú `🌐 Idioma / Language`.
 
 | Pestaña | Función |
 | :--- | :--- |

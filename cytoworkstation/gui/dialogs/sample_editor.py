@@ -1,11 +1,14 @@
 """
 Modal para la edición individual de umbrales morfológicos y Cut-Offs por muestra.
+Soporte bilingüe Español e Inglés.
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from ...i18n import get_current_language, t
 
-def open_sample_cutoff_editor_dialog(parent, row_id, sample_name, init_values, on_save_callback):
+
+def open_sample_cutoff_editor_dialog(parent, row_id, sample_name, init_values, on_save_callback, lang=None):
     """
     Abre diálogo modal para ajustar Cut-Offs y ventanas específicas de una muestra experimental.
     
@@ -21,23 +24,26 @@ def open_sample_cutoff_editor_dialog(parent, row_id, sample_name, init_values, o
         Valores iniciales [v1l, v2l, fsc, ssc, tlag, tmax]
     on_save_callback : callable
         Función a invocar al guardar con los 6 valores numéricos
+    lang : str, optional
+        Idioma de la interfaz ('es' o 'en')
     """
+    active_lang = lang or get_current_language()
     dlg = tk.Toplevel(parent)
-    dlg.title(f"Editar Cut-Offs de Muestra: {sample_name}")
-    dlg.geometry("420x310")
+    dlg.title(t('editor_title', lang=active_lang).format(sample_name))
+    dlg.geometry("450x330")
     dlg.transient(parent)
     dlg.grab_set()
 
-    frm = ttk.LabelFrame(dlg, text=f" Parámetros Individuales: {sample_name} ", padding=10)
+    frm = ttk.LabelFrame(dlg, text=t('editor_group', lang=active_lang).format(sample_name), padding=10)
     frm.pack(fill="both", expand=True, padx=10, pady=8)
 
     fields = [
-        ("Exclusión Detritos V1L (< log10):", init_values[0]),
-        ("Cut-Off Afectados V2L/V2R (log10):", init_values[1]),
-        ("Umbral Morfológico FSC-A Mín (>):", init_values[2]),
-        ("Umbral Morfológico SSC-A Mín (>):", init_values[3]),
-        ("Inicio Fase Activa T_lag (s):", init_values[4]),
-        ("Fin Fase Activa / Meseta T_max (s):", init_values[5]),
+        (t('editor_v1l', lang=active_lang), init_values[0]),
+        (t('editor_v2l', lang=active_lang), init_values[1]),
+        (t('editor_fsc', lang=active_lang), init_values[2]),
+        (t('editor_ssc', lang=active_lang), init_values[3]),
+        (t('editor_tlag', lang=active_lang), init_values[4]),
+        (t('editor_tmax', lang=active_lang), init_values[5]),
     ]
     entries = []
     for idx_f, (lbl_txt, init_v) in enumerate(fields):
@@ -56,7 +62,9 @@ def open_sample_cutoff_editor_dialog(parent, row_id, sample_name, init_values, o
             tlag_v = float(entries[4].get().strip())
             tmax_v = float(entries[5].get().strip())
         except ValueError as err:
-            messagebox.showerror("Valor Inválido", f"Todos los campos deben ser numéricos:\n{err}", parent=dlg)
+            err_title = "Valor Inválido" if active_lang == 'es' else "Invalid Value"
+            err_msg = f"Todos los campos deben ser numéricos:\n{err}" if active_lang == 'es' else f"All fields must be numerical:\n{err}"
+            messagebox.showerror(err_title, err_msg, parent=dlg)
             return
         dlg.destroy()
         if on_save_callback:
@@ -64,6 +72,16 @@ def open_sample_cutoff_editor_dialog(parent, row_id, sample_name, init_values, o
 
     btn_f = ttk.Frame(frm)
     btn_f.grid(row=len(fields), column=0, columnspan=2, pady=10)
-    tk.Button(btn_f, text="✅ Aplicar a Esta Muestra", bg="#117864", fg="white", font=("DejaVu Sans", 8, "bold"), padx=10, command=save_modal).pack(side="left", padx=4)
-    ttk.Button(btn_f, text="Cancelar", command=dlg.destroy).pack(side="left", padx=4)
+    tk.Button(
+        btn_f,
+        text=t('editor_btn_save', lang=active_lang),
+        bg="#117864", fg="white",
+        font=("DejaVu Sans", 8, "bold"), padx=10,
+        command=save_modal
+    ).pack(side="left", padx=4)
+    ttk.Button(
+        btn_f,
+        text=t('editor_btn_cancel', lang=active_lang),
+        command=dlg.destroy
+    ).pack(side="left", padx=4)
     return dlg

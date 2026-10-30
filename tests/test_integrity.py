@@ -64,6 +64,7 @@ class TestProjectIntegrity(unittest.TestCase):
             BASE_DIR / 'README.md',
             BASE_DIR / 'cytoworkstation' / '__init__.py',
             BASE_DIR / 'cytoworkstation' / 'config.py',
+            BASE_DIR / 'cytoworkstation' / 'i18n.py',
             BASE_DIR / 'cytoworkstation' / 'io' / 'fcs_parser.py',
             BASE_DIR / 'cytoworkstation' / 'io' / 'metadata.py',
             BASE_DIR / 'cytoworkstation' / 'io' / 'session.py',
