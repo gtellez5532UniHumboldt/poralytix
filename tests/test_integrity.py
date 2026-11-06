@@ -202,6 +202,39 @@ class TestProjectIntegrity(unittest.TestCase):
             self.assertEqual(loaded['global_parameters']['target_cell'], 'THP-1')
             self.assertEqual(loaded['thresholds']['sat1||THP-1||0.7000']['t_lag'], 75.0)
 
+    def test_07_gui_end_to_end_preanalysis_ingestion(self):
+        """Verifica que run_preanalysis_ingestion y todos los lienzos (multi_plot, hist, cat, sat) funcionen sin errores."""
+        import tkinter as tk
+        from unittest.mock import patch
+        from cytoworkstation.gui.app import FlowCytometryKineticWorkstation
+
+        root = tk.Tk()
+        root.withdraw()
+        try:
+            app = FlowCytometryKineticWorkstation(root)
+            f_cc = self.test_folders['813'] / 'THP1-CC-813-0.5-1.fcs'
+            f_exp = self.test_folders['813'] / 'THP1-813-0.5-1.fcs'
+            for fp in [f_cc, f_exp]:
+                meta = guess_metadata_from_filename(str(fp))
+                app.file_records.append(meta)
+
+            with patch('tkinter.messagebox.showinfo'), patch('tkinter.messagebox.showwarning'), patch('tkinter.messagebox.showerror'):
+                app.run_preanalysis_ingestion()
+                self.assertFalse(app.df_full.empty)
+                self.assertFalse(app.df_kinetics.empty)
+                self.assertGreater(len(app.multi_plot.series_data), 0)
+                self.assertGreater(len(app.hist_cutoff_plot.hist_series), 0)
+                self.assertGreater(len(app.sat_preview.curves), 0)
+
+                # Conmutar idioma con datos activos y verificar re-dibujado
+                app.set_language('en')
+                app.update_preanalysis_plots()
+                app.update_categorical_panel_view()
+                app.recompute_all_models_and_tables()
+                app.set_language('es')
+        finally:
+            root.destroy()
+
 
 if __name__ == "__main__":
     unittest.main()

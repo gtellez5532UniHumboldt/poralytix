@@ -10,48 +10,79 @@ from ...i18n import t
 
 class NativeSaturationPreview(tk.Frame):
     """
-    Lienzo nativo Tkinter para visualizar en tiempo real:
-      - Curvas ajustadas de velocidad V_active vs Concentración (Hill, MM, Gompertz, Weibull).
-      - Puntos experimentales por réplica y media ± SEM.
-      - Línea vertical K_d / EC50 y asíntota V_max.
+    Lienzo nativo en Tkinter para el Panel 4: previsualiza la gráfica de la función matemática
+    ajustada, la ecuación algebraica y numérica de cada modelo, los puntos experimentales
+    (medias ± SEM y réplicas) y el coeficiente de determinación R² del grupo de muestras.
     """
     def __init__(self, parent):
         super().__init__(parent, bg="white")
         self.canvas = tk.Canvas(self, bg="white", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
-
-        self.models_data = []  # [{'name', 'color', 'x_fit', 'y_fit', 'vmax', 'kd', 'nh', 'r2', 'is_active'}, ...]
-        self.points_data = []  # [{'conc', 'mean', 'sem', 'reps': [v1, v2, ...]}, ...]
-        self.title = ""
-        self.equation_str = ""
+        self.curves = []
+        self.title = "Previsualización de la Función Matemática y Bondad de Ajuste (R²)"
+        self.equation_str = "V_active(C) = (V_max · C^nH) / (K_d^nH + C^nH)"
         self.global_r2_str = ""
         self.x_label = "Concentración (µM)"
         self.y_label = "V_active (%/s)"
-
         self.canvas.bind("<Configure>", lambda e: self.redraw())
 
-    def set_preview_data(self, models_data, points_data, title="", equation_str="", global_r2_str="", x_label=None, y_label=None):
-        self.models_data = models_data
-        self.points_data = points_data
+    def set_curves(
+        self, curves, title, equation_str="",
+        x_label="Concentración (µM)", y_label="V_active (%/s)",
+        global_r2_str=""
+    ):
+        self.curves = curves
         self.title = title
-        self.equation_str = equation_str
+        if equation_str:
+            self.equation_str = equation_str
+        self.x_label = x_label
+        self.y_label = y_label
         self.global_r2_str = global_r2_str
-        if x_label:
-            self.x_label = x_label
-        if y_label:
-            self.y_label = y_label
         self.redraw()
+
+    def set_preview_data(self, models_data, points_data, title="", equation_str="", global_r2_str="", x_label=None, y_label=None):
+        curves = []
+        x_pts = [float(p['conc']) for p in points_data]
+        y_pts = [float(p['mean']) for p in points_data]
+        y_sem = [float(p.get('sem', 0.0)) for p in points_data]
+        raw_x, raw_y = [], []
+        for p in points_data:
+            for r_v in p.get('reps', []):
+                raw_x.append(float(p['conc']))
+                raw_y.append(float(r_v))
+        for idx, m in enumerate(models_data):
+            curves.append({
+                'label': m.get('name', m.get('label', f"Model {idx+1}")),
+                'color': m.get('color', '#004488'),
+                'dash': None if m.get('is_active', True) else (4, 3),
+                'x_pts': x_pts if idx == 0 else [],
+                'y_pts': y_pts if idx == 0 else [],
+                'y_sem': y_sem if idx == 0 else [],
+                'raw_x': raw_x if idx == 0 else [],
+                'raw_y': raw_y if idx == 0 else [],
+                'x_fit': m.get('x_fit', []),
+                'y_fit': m.get('y_fit', []),
+                'kd_marker': m.get('kd', m.get('kd_marker')),
+                'y_half': m.get('y_half'),
+                'eq_eval': m.get('eq_eval', ''),
+                'r2_badge': m.get('r2_badge', f"R² = {m['r2']:.4f}" if m.get('r2') is not None else '')
+            })
+        self.set_curves(
+            curves, title=title, equation_str=equation_str,
+            x_label=x_label or self.x_label, y_label=y_label or self.y_label,
+            global_r2_str=global_r2_str
+        )
 
     def redraw(self):
         self.canvas.delete("all")
-        W = max(380, self.canvas.winfo_width())
+        W = max(360, self.canvas.winfo_width())
         H = max(260, self.canvas.winfo_height())
-
-        ml, mr, mt, mb = 64, 25, 54, 42
-        pw = max(180, W - ml - mr)
+        ml, mr, mt, mb = 68, 22, 62, 46
+        pw = max(140, W - ml - mr)
         ph = max(110, H - mt - mb)
         x0, y0, x1, y1 = ml, mt, ml + pw, mt + ph
 
+        # Encabezado superior con título, ecuación general del modelo y R² global del grupo
         self.canvas.create_rectangle(x0, 5, x1, y0 - 6, fill="#EBF5FB", outline="#85C1E9")
         self.canvas.create_text(
             (x0 + x1) // 2, 16, text=self.title,
@@ -70,89 +101,93 @@ class NativeSaturationPreview(tk.Frame):
         self.canvas.create_rectangle(x0, y0, x1, y1, fill="#FCFDFE", outline="#333333")
 
         all_x, all_y = [0.0], [0.0]
-        for p in self.points_data:
-            all_x.append(float(p['conc']))
-            all_y.append(float(p['mean'] + p.get('sem', 0.0)))
-            for r_v in p.get('reps', []):
-                all_y.append(float(r_v))
-        for m in self.models_data:
-            if len(m['x_fit']) > 0:
-                all_x.extend([float(np.min(m['x_fit'])), float(np.max(m['x_fit']))])
-            if len(m['y_fit']) > 0:
-                all_y.extend([float(np.min(m['y_fit'])), float(np.max(m['y_fit']))])
+        for c in self.curves:
+            all_x.extend(c.get('x_pts', []))
+            all_x.extend(c.get('raw_x', []))
+            y_pts = np.asarray(c.get('y_pts', []), dtype=float)
+            y_sem = np.asarray(c.get('y_sem', np.zeros_like(y_pts)), dtype=float)
+            if len(y_pts) > 0:
+                all_y.extend(y_pts + y_sem)
+            all_y.extend(c.get('raw_y', []))
+            all_x.extend(c.get('x_fit', []))
+            all_y.extend(c.get('y_fit', []))
 
-        xmax = max(1.0, float(np.max(all_x)) * 1.15)
-        ymax = max(0.1, float(np.max(all_y)) * 1.20)
+        xmax = max(all_x) * 1.12 if max(all_x) > 0 else 5.0
+        ymax = max(all_y) * 1.25 if max(all_y) > 0 else 0.5
 
         def to_px(xv, yv):
-            px = x0 + (np.clip(float(xv), 0.0, xmax) / xmax) * pw
-            py = y1 - (np.clip(float(yv), 0.0, ymax) / ymax) * ph
+            px = x0 + (xv / xmax) * pw
+            py = y1 - (yv / ymax) * ph
             return px, py
 
-        for gx in np.linspace(0.0, xmax, 6):
+        for gx in np.linspace(0, xmax, 6):
             px, _ = to_px(gx, 0)
             self.canvas.create_line(px, y0, px, y1, fill="#E5E8E8", dash=(2, 3))
-            lbl_x = f"{gx:.1f}" if xmax < 15 else f"{gx:.0f}"
+            lbl_x = f"{gx:.0f}" if xmax >= 50 else f"{gx:.2f}"
             self.canvas.create_text(px, y1 + 12, text=lbl_x, font=("DejaVu Sans", 8))
 
-        for gy in np.linspace(0.0, ymax, 5):
+        for gy in np.linspace(0, ymax, 5):
             _, py = to_px(0, gy)
             self.canvas.create_line(x0, py, x1, py, fill="#E5E8E8", dash=(2, 3))
-            lbl_y = f"{gy:.2f}" if ymax < 2 else f"{gy:.1f}"
+            lbl_y = f"{gy:.1f}" if ymax >= 5.0 else f"{gy:.3f}"
             self.canvas.create_text(x0 - 6, py, text=lbl_y, anchor="e", font=("DejaVu Sans", 8))
 
         self.canvas.create_text((x0 + x1) // 2, y1 + 29, text=self.x_label, font=("DejaVu Sans", 8, "bold"), fill="#002B49")
         self.canvas.create_text(x0 - 48, (y0 + y1) // 2, text=self.y_label, font=("DejaVu Sans", 8, "bold"), fill="#002B49")
 
-        for m in self.models_data:
-            xf, yf = m['x_fit'], m['y_fit']
-            if len(xf) < 2:
-                continue
-            pts = []
-            for xv, yv in zip(xf, yf):
-                pts.extend(to_px(xv, yv))
-            col = m['color']
-            w_px = 3 if m.get('is_active', False) else 1
-            dash_p = None if m.get('is_active', False) else (4, 3)
-            self.canvas.create_line(pts, fill=col, width=w_px, dash=dash_p)
+        # Dibujar curvas de la función, réplicas individuales, medias ± SEM y guías de Kd
+        for c in self.curves:
+            col = c['color']
+            dash_pat = c.get('dash', None)
 
-            kd_v = m.get('kd')
-            if m.get('is_active', False) and kd_v is not None and np.isfinite(kd_v) and 0 < kd_v < xmax:
-                px_kd, _ = to_px(kd_v, 0)
-                self.canvas.create_line(px_kd, y0, px_kd, y1, fill="#E67E22", dash=(3, 2), width=1)
-                self.canvas.create_text(px_kd + 4, y0 + 12, text=f"Kd = {kd_v:.2f} µM", font=("DejaVu Sans", 7, "bold"), fill="#E67E22", anchor="w")
+            raw_x = c.get('raw_x', [])
+            raw_y = c.get('raw_y', [])
+            for rx, ry in zip(raw_x, raw_y):
+                prx, pry = to_px(rx, ry)
+                self.canvas.create_oval(prx - 2, pry - 2, prx + 2, pry + 2, outline=col, fill="")
 
-        for p in self.points_data:
-            cx = float(p['conc'])
-            my = float(p['mean'])
-            sem = float(p.get('sem', 0.0))
+            if len(c.get('x_fit', [])) >= 2:
+                fit_pts = []
+                for xv, yv in zip(c['x_fit'], c['y_fit']):
+                    fit_pts.extend(to_px(np.clip(xv, 0.0, xmax), np.clip(yv, 0.0, ymax)))
+                if dash_pat:
+                    self.canvas.create_line(fit_pts, fill=col, width=2, dash=dash_pat)
+                else:
+                    self.canvas.create_line(fit_pts, fill=col, width=2)
 
-            px, py = to_px(cx, my)
-            _, py_top = to_px(cx, my + sem)
-            _, py_bot = to_px(cx, max(0.0, my - sem))
+            kd_val = c.get('kd_marker', None)
+            uhalf_val = c.get('y_half', None)
+            if kd_val is not None and 0 < kd_val <= xmax and uhalf_val is not None and 0 <= uhalf_val <= ymax:
+                pkx, pky = to_px(kd_val, uhalf_val)
+                self.canvas.create_line(pkx, pky, pkx, y1, fill=col, dash=(3, 2), width=1)
+                self.canvas.create_line(x0, pky, pkx, pky, fill=col, dash=(3, 2), width=1)
 
-            self.canvas.create_line(px, py_bot, px, py_top, fill="#1C2833", width=1)
-            self.canvas.create_line(px - 3, py_top, px + 3, py_top, fill="#1C2833", width=1)
-            self.canvas.create_line(px - 3, py_bot, px + 3, py_bot, fill="#1C2833", width=1)
+            x_pts = c.get('x_pts', [])
+            y_pts = c.get('y_pts', [])
+            y_sem = c.get('y_sem', [0.0] * len(x_pts))
+            for xv, yv, sv in zip(x_pts, y_pts, y_sem):
+                px, py = to_px(xv, yv)
+                if sv > 0:
+                    _, py_top = to_px(xv, min(ymax, yv + sv))
+                    _, py_bot = to_px(xv, max(0.0, yv - sv))
+                    self.canvas.create_line(px, py_top, px, py_bot, fill=col, width=1)
+                    self.canvas.create_line(px - 3, py_top, px + 3, py_top, fill=col, width=1)
+                    self.canvas.create_line(px - 3, py_bot, px + 3, py_bot, fill=col, width=1)
+                self.canvas.create_oval(px - 4, py - 4, px + 4, py + 4, fill=col, outline="white")
 
-            for r_v in p.get('reps', []):
-                _, r_py = to_px(cx, r_v)
-                self.canvas.create_oval(px - 2.5, r_py - 2.5, px + 2.5, r_py + 2.5, fill="#AED6F1", outline="#2874A6")
-
-            self.canvas.create_oval(px - 4.5, py - 4.5, px + 4.5, py + 4.5, fill="#1B4F72", outline="white", width=1.5)
-
-        ly = y0 + 6
-        for m in self.models_data:
-            col = m['color']
-            name = m['name']
-            r2_val = m.get('r2')
-            r2_txt = f" (R² = {r2_val:.3f})" if r2_val is not None and np.isfinite(r2_val) else ""
-            line1 = f"{name}{r2_txt}"
-            eq_eval = m.get('eq_eval', '')
-
-            self.canvas.create_line(x0 + 8, ly + 6, x0 + 20, ly + 6, fill=col, width=3 if m.get('is_active') else 1)
-            self.canvas.create_text(x0 + 12, ly, text=line1, anchor="nw", font=("DejaVu Sans", 8, "bold"), fill=col)
-            if eq_eval and m.get('is_active'):
-                self.canvas.create_text(x0 + 22, ly + 13, text=eq_eval, anchor="nw", font=("Consolas", 8), fill="#1C2833")
-                ly += 13
-            ly += 15
+        if self.curves:
+            box_h = min(ph - 12, 10 + 28 * len(self.curves))
+            self.canvas.create_rectangle(
+                x0 + 6, y0 + 6, min(x1 - 6, x0 + max(280, int(pw * 0.78))), y0 + 6 + box_h,
+                fill="#FDFEFE", outline="#D6DBDF"
+            )
+            ly = y0 + 10
+            for c in self.curves:
+                col = c['color']
+                r2_badge = c.get('r2_badge', '')
+                eq_eval = c.get('eq_eval', c.get('param_str', ''))
+                line1 = f"● {c['label']}   {r2_badge}".strip()
+                self.canvas.create_text(x0 + 12, ly, text=line1, anchor="nw", font=("DejaVu Sans", 8, "bold"), fill=col)
+                if eq_eval:
+                    self.canvas.create_text(x0 + 22, ly + 13, text=eq_eval, anchor="nw", font=("Consolas", 8), fill="#1C2833")
+                ly += 27

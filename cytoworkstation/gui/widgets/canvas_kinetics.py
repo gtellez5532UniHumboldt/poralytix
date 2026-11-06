@@ -26,11 +26,12 @@ class NativeInteractiveMultiPlot(tk.Frame):
         self.series_data = []  # Lista de dicts por curva: {'label', 'color', 'is_ctrl', 't', 'perm_m', 'perm_se', ...}
         self.active_curve_key = None
         self.active_title = ""
-        self.active_tlag = 60.0
-        self.active_tmax = 300.0
+        self.active_tlag = None
+        self.active_tmax = None
         self.display_mode = "Dual (Continua + Afectados V2L %)"
         self.scatter_norm = False
         self.dragging_line = None  # 'tlag' | 'tmax' | None
+        self.xmin, self.xmax = -60.0, 600.0
         self.plot_boxes = []  # [(x0, y0, x1, y1), ...] para los 3 paneles
 
         self.canvas.bind("<Configure>", lambda e: self.redraw())
@@ -38,24 +39,27 @@ class NativeInteractiveMultiPlot(tk.Frame):
         self.canvas.bind("<B1-Motion>", self._on_motion)
         self.canvas.bind("<ButtonRelease-1>", self._on_release)
 
-    def set_plot_data(self, series_data, active_curve_key=None, active_title="", active_tlag=60.0, active_tmax=300.0, display_mode="Dual (Continua + Afectados V2L %)", scatter_norm=False):
+    def set_data(self, series_data, active_tlag, active_tmax, active_title, scatter_norm=False, display_mode="Dual (Continua + Afectados V2L %)"):
         self.series_data = series_data
-        self.active_curve_key = active_curve_key
+        self.active_tlag = float(active_tlag) if active_tlag is not None else None
+        self.active_tmax = float(active_tmax) if active_tmax is not None else None
         self.active_title = active_title
-        self.active_tlag = float(active_tlag) if active_tlag is not None else 60.0
-        self.active_tmax = float(active_tmax) if active_tmax is not None else 300.0
-        self.display_mode = display_mode
         self.scatter_norm = scatter_norm
+        self.display_mode = display_mode
         self.redraw()
+
+    def set_plot_data(self, series_data, active_curve_key=None, active_title="", active_tlag=60.0, active_tmax=300.0, display_mode="Dual (Continua + Afectados V2L %)", scatter_norm=False):
+        self.active_curve_key = active_curve_key
+        self.set_data(series_data, active_tlag, active_tmax, active_title, scatter_norm=scatter_norm, display_mode=display_mode)
 
     def _x_to_px(self, t_val, box):
         x0, _, x1, _ = box
-        return x0 + (float(t_val) / 600.0) * max(1.0, x1 - x0)
+        return x0 + ((float(t_val) - self.xmin) / (self.xmax - self.xmin)) * max(1.0, x1 - x0)
 
     def _px_to_t(self, px, box):
         x0, _, x1, _ = box
         frac = (px - x0) / max(1.0, x1 - x0)
-        return float(np.clip(frac * 600.0, 0.0, 600.0))
+        return float(np.clip(self.xmin + frac * (self.xmax - self.xmin), 0.0, 600.0))
 
     def _y_to_px(self, y_val, ymin, ymax, box):
         _, y0, _, y1 = box
