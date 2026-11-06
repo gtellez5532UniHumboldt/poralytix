@@ -1,8 +1,11 @@
 """
 Lienzo interactivo Tkinter para Histograma de Fluorescencia y Cut-Offs arrastrables con el ratón.
+Soporte bilingüe dinámico.
 """
 import tkinter as tk
 import numpy as np
+
+from ...i18n import t
 
 
 class NativeHistogramCutoffCanvas(tk.Frame):
@@ -127,19 +130,19 @@ class NativeHistogramCutoffCanvas(tk.Frame):
 
         self.canvas.create_rectangle(x0, y0, x1, y1, fill="", outline="#333333", width=1)
 
-        self.canvas.create_text(
-            (x0 + x1) // 2, y0 - 11,
-            text=f"Histograma Dinámico (Muestras Seleccionadas) — Exclusión V1L < {self.excl_log:.2f} | Cut-Off V2L/V2R = {self.cutoff_log:.2f} [{self.scope_text}]",
-            font=("DejaVu Sans", 9, "bold"), fill="#002B49"
-        )
-        if px_excl - x0 > 55:
-            self.canvas.create_text(x0 + 5, y0 + 8, text="V1L: Excluidos", anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#4A235A")
-        self.canvas.create_text(max(x0 + 6, px_excl + 6), y0 + 8, text="◄ V2L: Afectados", anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#B03A2E")
-        self.canvas.create_text(x1 - 6, y0 + 8, text="V2R: Sanos (Intactos) ►", anchor="ne", font=("DejaVu Sans", 8, "bold"), fill="#1E8449")
+        # Encabezado y títulos localizados
+        scope_lbl = t("tab2_scope_selected") if ("Discriminado" in str(self.scope_text) or "Discriminated" in str(self.scope_text)) else t("tab2_scope_global")
+        title_txt = t("canvas_hist_title").format(self.excl_log, self.cutoff_log, scope_lbl)
+        self.canvas.create_text((x0 + x1) // 2, y0 - 11, text=title_txt, font=("DejaVu Sans", 9, "bold"), fill="#002B49")
 
-        ylabel = "Eventos (%)" if self.y_mode == "pct" else "N° Eventos"
+        if px_excl - x0 > 55:
+            self.canvas.create_text(x0 + 5, y0 + 8, text=t("canvas_hist_v1l"), anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#4A235A")
+        self.canvas.create_text(max(x0 + 6, px_excl + 6), y0 + 8, text=t("canvas_hist_v2l"), anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#B03A2E")
+        self.canvas.create_text(x1 - 6, y0 + 8, text=t("canvas_hist_v2r"), anchor="ne", font=("DejaVu Sans", 8, "bold"), fill="#1E8449")
+
+        ylabel = t("canvas_hist_ylabel_pct") if self.y_mode == "pct" else t("canvas_hist_ylabel_cnt")
         self.canvas.create_text(x0 - 40, (y0 + y1) // 2, text=ylabel, font=("DejaVu Sans", 8, "bold"), fill="#1C2833")
-        self.canvas.create_text((x0 + x1) // 2, y1 + 20, text="log10(Fluorescencia Canal Seleccionado)", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
+        self.canvas.create_text((x0 + x1) // 2, y1 + 20, text=t("canvas_hist_xlabel"), font=("DejaVu Sans", 8, "bold"), fill="#002B49")
 
         self.canvas.create_line(px_excl, y0, px_excl, y1, fill="#4A235A", width=2, dash=(3, 2))
         self.canvas.create_rectangle(px_excl - 5, y0 + 22, px_excl + 5, y0 + 36, fill="#4A235A", outline="white")
@@ -151,7 +154,7 @@ class NativeHistogramCutoffCanvas(tk.Frame):
 
         lx = x1 + 10
         ly = y0 + 2
-        self.canvas.create_text(lx, ly, text=f"Muestras en Histograma ({len(self.hist_series)}):", anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
+        self.canvas.create_text(lx, ly, text=t("canvas_hist_legend").format(len(self.hist_series)), anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
         ly += 15
         for s in self.hist_series[:6]:
             dash_p = (3, 2) if s.get('dashed', False) else None
@@ -159,7 +162,7 @@ class NativeHistogramCutoffCanvas(tk.Frame):
             self.canvas.create_text(lx + 20, ly, text=s['label'][:28], anchor="nw", font=("DejaVu Sans", 8), fill="#1C2833")
             ly += 14
         if len(self.hist_series) > 6:
-            self.canvas.create_text(lx, ly, text=f"+ {len(self.hist_series) - 6} curvas adicionales...", anchor="nw", font=("DejaVu Sans", 8), fill="#566573")
+            self.canvas.create_text(lx, ly, text=t("canvas_hist_more").format(len(self.hist_series) - 6), anchor="nw", font=("DejaVu Sans", 8), fill="#566573")
             ly += 14
         if self.v2l_summary_text:
             ly += 2

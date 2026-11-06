@@ -1,117 +1,125 @@
 """
-Lienzo interactivo Tkinter para el Panel de Análisis Categórico (Afectados V2L vs No Afectados V2R).
-Soporta:
-  1) Balance Temporal Complementario (% V2L vs % V2R + hitos temporales)
-  2) Comparativa de Hitos Temporales (T_onset, T50, T_max)
-  3) Mapa de Calor Espaciotemporal
-  4) Velocidad Instantánea de Conversión d(%V2L)/dt
+Lienzo interactivo Tkinter para Visualización Categórica (Barras Apiladas, Hitos, Heatmap y Tasa de Conversión).
+Soporte bilingüe dinámico.
 """
 import tkinter as tk
 import numpy as np
 import pandas as pd
-from ...config import CURVE_PALETTE
+
+from ...i18n import t
 
 
 class NativeCategoricalProportionsCanvas(tk.Frame):
     """
-    Lienzo interactivo en Tkinter para análisis categórico y ventanas temporales.
+    Lienzo nativo Tkinter con 4 Modos de visualización categórica intercambiables:
+      - Modo 1: Balance Temporal (% Afectados V2L vs % No Afectados V2R con hitos T_onset, T50 y T_max).
+      - Modo 2: Comparativa de Hitos Temporales por Dosis (Gráfico de barras de T_onset, T50, T_max).
+      - Modo 3: Mapa de Calor Espaciotemporal (% V2L por Compuesto × Dosis × Ventana de Tiempo).
+      - Modo 4: Velocidad Instantánea de Conversión d(%V2L)/dt y Entropía H(t).
     """
     def __init__(self, parent):
         super().__init__(parent, bg="white")
-        self.canvas = tk.Canvas(self, bg="white", highlightthickness=0, height=235)
+        self.canvas = tk.Canvas(self, bg="white", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
-        self.mode = "Balance Temporal: % Afectados (V2L) vs % No Afectados (V2R) y Hitos"
+
+        self.mode_str = "Balance Temporal"
         self.win_df = pd.DataFrame()
         self.sum_df = pd.DataFrame()
         self.active_label = ""
+
         self.canvas.bind("<Configure>", lambda e: self.redraw())
 
-    def set_panel_data(self, mode, win_df, sum_df, active_label=""):
-        self.mode = mode
-        self.win_df = win_df if win_df is not None else pd.DataFrame()
-        self.sum_df = sum_df if sum_df is not None else pd.DataFrame()
+    def set_panel_data(self, mode_str, win_df, sum_df, active_label=""):
+        self.mode_str = str(mode_str)
+        self.win_df = win_df.copy() if win_df is not None else pd.DataFrame()
+        self.sum_df = sum_df.copy() if sum_df is not None else pd.DataFrame()
         self.active_label = active_label
         self.redraw()
 
     def redraw(self):
         self.canvas.delete("all")
         W = max(520, self.canvas.winfo_width())
-        H = max(195, self.canvas.winfo_height())
+        H = max(260, self.canvas.winfo_height())
 
-        if self.win_df.empty and self.sum_df.empty:
+        if "Hitos" in self.mode_str or "Milestone" in self.mode_str:
+            self._draw_milestones_comparison(W, H)
+        elif "Calor" in self.mode_str or "Heatmap" in self.mode_str:
+            self._draw_heatmap(W, H)
+        elif "Velocidad" in self.mode_str or "Instantaneous" in self.mode_str:
+            self._draw_conversion_rate_and_entropy(W, H)
+        else:
+            self._draw_temporal_balance(W, H)
+
+    def _draw_temporal_balance(self, W, H):
+        if self.win_df.empty:
             self.canvas.create_text(
                 W // 2, H // 2,
-                text="Ejecuta el Pre-Análisis o carga el Set Demo para visualizar el Panel de Proporciones Categóricas.",
-                font=("DejaVu Sans", 9, "bold"), fill="#566573"
+                text="Sin datos categóricos calculados. Ejecuta el Pre-Análisis.",
+                font=("DejaVu Sans", 9, "italic"), fill="#7F8C8D"
             )
             return
 
-        if "Mapa de Calor" in self.mode:
-            self._draw_heatmap(W, H)
-        elif "Comparativa de Hitos" in self.mode:
-            self._draw_milestones_bars(W, H)
-        elif "Velocidad" in self.mode:
-            self._draw_conversion_rate_and_entropy(W, H)
-        else:
-            self._draw_complementary_proportions_curve(W, H)
-
-    def _draw_complementary_proportions_curve(self, W, H):
-        ml, mr, mt, mb = 68, 250, 28, 34
-        x0, y0, x1, y1 = ml, mt, max(ml + 180, W - mr), max(mt + 90, H - mb)
+        ml, mr, mt, mb = 65, 230, 26, 32
+        x0, y0, x1, y1 = ml, mt, max(ml + 180, W - mr), max(mt + 80, H - mb)
         pw, ph = x1 - x0, y1 - y0
-        xmin, xmax = -60.0, 600.0
-
-        def to_px(tv, yv):
-            px = x0 + ((tv - xmin) / (xmax - xmin)) * pw
-            py = y1 - (np.clip(yv, 0.0, 100.0) / 100.0) * ph
-            return px, py
 
         self.canvas.create_rectangle(x0, y0, x1, y1, fill="#FCFDFE", outline="#333333")
-        title_txt = f"Proporción de Eventos Afectados (V2L %) vs. No Afectados (V2R %) — {self.active_label}"
+
+        t_min, t_max = -60.0, 600.0
+
+        def to_px(tv, pct):
+            px = x0 + ((tv - t_min) / (t_max - t_min)) * pw
+            py = y1 - (np.clip(pct, 0.0, 100.0) / 100.0) * ph
+            return px, py
+
+        cids = sorted(self.win_df['Peptide'].astype(str) + " | " + self.win_df['Cell_Line'].astype(str) + " | " + self.win_df['Concentration_uM'].apply(lambda v: f"{v:.2f} µM"))
+        chosen_cid = self.active_label if (self.active_label and self.active_label in cids) else (cids[0] if cids else "")
+
+        title_txt = t("canvas_cat_curve").format(chosen_cid)
         self.canvas.create_text((x0 + x1) // 2, y0 - 12, text=title_txt, font=("DejaVu Sans", 9, "bold"), fill="#002B49")
 
-        if self.win_df.empty:
-            return
-
         sub = self.win_df.copy()
-        sub['CID'] = sub.apply(lambda r: f"{r['Peptide']} | {r['Cell_Line']} | {r['Concentration_uM']:.2f} µM", axis=1)
-        unique_cids = sorted(sub['CID'].unique())
-        chosen_cid = self.active_label if self.active_label in unique_cids else (unique_cids[-1] if unique_cids else "")
-        if not chosen_cid:
-            return
-        c_df = sub[sub['CID'] == chosen_cid].sort_values('Time_Window')
+        sub['CID'] = sub['Peptide'].astype(str) + " | " + sub['Cell_Line'].astype(str) + " | " + sub['Concentration_uM'].apply(lambda v: f"{v:.2f} µM")
+        curve_data = sub[sub['CID'] == chosen_cid].sort_values('Time_Window').reset_index(drop=True)
 
-        t_vals = c_df['Time_Window'].values.astype(float)
-        v2l_vals = c_df['Mean_Affected_V2L_Pct'].values.astype(float)
-        v2r_vals = c_df['Mean_Unaffected_V2R_Pct'].values.astype(float)
-        sig_flags = c_df['Window_Status'].values if 'Window_Status' in c_df else []
+        if not curve_data.empty:
+            v2l_pts, v2r_pts = [], []
+            for _, r in curve_data.iterrows():
+                tw = float(r['Time_Window'])
+                v2l_pct = float(r['Mean_Affected_V2L_Pct'])
+                v2r_pct = float(r['Mean_Intact_V2R_Pct'])
+                v2l_pts.append(to_px(tw, v2l_pct))
+                v2r_pts.append(to_px(tw, v2r_pct))
 
-        if len(t_vals) >= 2:
-            poly_v2l = [to_px(t_vals[0], 0.0)[0], y1]
-            for tv, yv in zip(t_vals, v2l_vals):
-                poly_v2l.extend(to_px(tv, yv))
-            poly_v2l.extend([to_px(t_vals[-1], 0.0)[0], y1])
-            self.canvas.create_polygon(poly_v2l, fill="#FADBD8", outline="")
+            poly_pts = [to_px(curve_data.iloc[0]['Time_Window'], 0)[0], y1]
+            for px, py in v2l_pts:
+                poly_pts.extend([px, py])
+            poly_pts.extend([to_px(curve_data.iloc[-1]['Time_Window'], 0)[0], y1])
+            if len(poly_pts) >= 6:
+                self.canvas.create_polygon(poly_pts, fill="#FDEDEC", outline="")
 
-            poly_v2r = [to_px(t_vals[0], 100.0)[0], y0]
-            for tv, yv in zip(t_vals, v2l_vals):
-                poly_v2r.extend(to_px(tv, yv))
-            poly_v2r.extend([to_px(t_vals[-1], 100.0)[0], y0])
-            self.canvas.create_polygon(poly_v2r, fill="#D5F5E3", outline="")
+            line_v2l = []
+            for px, py in v2l_pts:
+                line_v2l.extend([px, py])
+            if len(line_v2l) >= 4:
+                self.canvas.create_line(line_v2l, fill="#C0392B", width=2.5)
 
-            pts_v2l, pts_v2r = [], []
-            for idx_pt, (tv, v_aff, v_unaff) in enumerate(zip(t_vals, v2l_vals, v2r_vals)):
-                px, py_a = to_px(tv, v_aff)
-                _, py_u = to_px(tv, v_unaff)
-                pts_v2l.extend([px, py_a])
-                pts_v2r.extend([px, py_u])
-                self.canvas.create_oval(px - 2.5, py_a - 2.5, px + 2.5, py_a + 2.5, fill="#C0392B", outline="white")
-                self.canvas.create_rectangle(px - 2.0, py_u - 2.0, px + 2.0, py_u + 2.0, fill="#1E8449", outline="")
-                if idx_pt < len(sig_flags) and ("*" in str(sig_flags[idx_pt])):
+            line_v2r = []
+            for px, py in v2r_pts:
+                line_v2r.extend([px, py])
+            if len(line_v2r) >= 4:
+                self.canvas.create_line(line_v2r, fill="#1E8449", width=2, dash=(4, 2))
+
+            for _, r in curve_data.iterrows():
+                tw = float(r['Time_Window'])
+                v2l_pct = float(r['Mean_Affected_V2L_Pct'])
+                v2r_pct = float(r['Mean_Intact_V2R_Pct'])
+                px, py_a = to_px(tw, v2l_pct)
+                _, py_r = to_px(tw, v2r_pct)
+                self.canvas.create_oval(px - 3, py_a - 3, px + 3, py_a + 3, fill="#C0392B", outline="white")
+                self.canvas.create_oval(px - 3, py_r - 3, px + 3, py_r + 3, fill="#1E8449", outline="white")
+                if float(r.get('p_value_Fisher', 1.0)) < 0.05:
                     self.canvas.create_text(px, max(y0 + 6, py_a - 7), text="*", font=("DejaVu Sans", 8, "bold"), fill="#922B21")
-
-            self.canvas.create_line(pts_v2l, fill="#C0392B", width=2.5)
-            self.canvas.create_line(pts_v2r, fill="#1E8449", width=2.0, dash=(4, 2))
 
         for tx in [-60, 0, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600]:
             px, _ = to_px(tx, 0)
@@ -123,63 +131,69 @@ class NativeCategoricalProportionsCanvas(tk.Frame):
             self.canvas.create_line(x0, py, x1, py, fill="#BFC9CA" if gy == 50 else "#E5E8E8", dash=(4, 2) if gy == 50 else (2, 3))
             self.canvas.create_text(x0 - 6, py, text=f"{gy}%", anchor="e", font=("DejaVu Sans", 8))
 
-        self.canvas.create_text(x0 - 44, (y0 + y1) // 2, text="Proporción (%)", font=("DejaVu Sans", 8, "bold"), fill="#1C2833")
-        self.canvas.create_text((x0 + x1) // 2, y1 + 23, text="Ventana de Tiempo (segundos)", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
+        self.canvas.create_text(x0 - 44, (y0 + y1) // 2, text=t("canvas_cat_ylabel"), font=("DejaVu Sans", 8, "bold"), fill="#1C2833")
+        self.canvas.create_text((x0 + x1) // 2, y1 + 23, text=t("canvas_cat_xlabel"), font=("DejaVu Sans", 8, "bold"), fill="#002B49")
 
         lx, ly = x1 + 10, y0 + 2
-        self.canvas.create_text(lx, ly, text=f"Curva: {chosen_cid[:28]}", anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
+        self.canvas.create_text(lx, ly, text=t("canvas_cat_curve").format(chosen_cid[:28]), anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
         ly += 16
         self.canvas.create_line(lx, ly + 6, lx + 16, ly + 6, fill="#C0392B", width=3)
-        self.canvas.create_text(lx + 22, ly, text="% Afectados (V2L < Cut-Off)", anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#C0392B")
+        self.canvas.create_text(lx + 22, ly, text=t("canvas_cat_v2l"), anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#C0392B")
         ly += 15
         self.canvas.create_line(lx, ly + 6, lx + 16, ly + 6, fill="#1E8449", width=2, dash=(4, 2))
-        self.canvas.create_text(lx + 22, ly, text="% No Afectados (V2R >= Cut-Off)", anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#1E8449")
+        self.canvas.create_text(lx + 22, ly, text=t("canvas_cat_v2r"), anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#1E8449")
         ly += 18
 
         if not self.sum_df.empty:
             s_sub = self.sum_df.copy()
-            s_sub['CID'] = s_sub.apply(lambda r: f"{r['Peptide']} | {r['Cell_Line']} | {r['Concentration_uM']:.2f} µM", axis=1)
-            row_m = s_sub[s_sub['CID'] == chosen_cid]
-            if not row_m.empty:
-                r0 = row_m.iloc[0]
-                milestones = [
-                    ("T_onset stat", float(r0['T_Stat_Onset_s']), "#2874A6", (3, 2)),
-                    ("T50 del Efecto", float(r0['T50_Effect_s']), "#D35400", (5, 2)),
-                    ("LT50 (50% Pob)", float(r0['LT50_s']), "#6C3483", (2, 2)),
-                    ("T_efecto_máx", float(r0['T_Effect_Max_s']), "#922B21", (6, 2))
+            s_sub['CID'] = s_sub['Peptide'].astype(str) + " | " + s_sub['Cell_Line'].astype(str) + " | " + s_sub['Concentration_uM'].apply(lambda v: f"{v:.2f} µM")
+            hit = s_sub[s_sub['CID'] == chosen_cid]
+            if not hit.empty:
+                r = hit.iloc[0]
+                t_onset = r.get('T_Stat_Onset_s', np.nan)
+                t50 = r.get('T50_Effect_s', np.nan)
+                lt50 = r.get('LT50_Population_s', np.nan)
+                t_max_eff = r.get('T_Effect_Max_s', np.nan)
+
+                markers = [
+                    (t_onset, "#2874A6", "T_onset", 1),
+                    (t50, "#E67E22", "T50 Efecto", 2),
+                    (lt50, "#884EA0", "LT50 Abs", 3),
+                    (t_max_eff, "#922B21", "T_máx", 4)
                 ]
-                for m_lbl, m_val, m_col, m_dash in milestones:
-                    if 0.0 <= m_val < 600.0:
-                        px_m, _ = to_px(m_val, 0)
-                        self.canvas.create_line(px_m, y0, px_m, y1, fill=m_col, width=2, dash=m_dash)
-                    self.canvas.create_text(
-                        lx, ly,
-                        text=f"• {m_lbl}: {m_val:.1f} s" if m_val < 600.0 else f"• {m_lbl}: >600 s",
-                        anchor="nw", font=("DejaVu Sans", 8, "bold"), fill=m_col
-                    )
-                    ly += 14
+                for tv, col, tag, rank in markers:
+                    if tv is not None and np.isfinite(tv) and t_min <= tv <= t_max:
+                        px, _ = to_px(tv, 0)
+                        self.canvas.create_line(px, y0, px, y1, fill=col, width=1.5, dash=(4, 2))
+                        self.canvas.create_polygon([px, y0, px - 4, y0 - 8, px + 4, y0 - 8], fill=col, outline="")
+                        self.canvas.create_text(
+                            lx, ly, text=f"• {tag}: {tv:.0f}s",
+                            anchor="nw", font=("DejaVu Sans", 8, "bold"), fill=col
+                        )
+                        ly += 14
+
+                cat_txt = str(r.get('Affectation_Status', 'Indeterminado'))
+                ly += 4
                 self.canvas.create_text(
-                    lx, ly + 2,
-                    text=f"Máx V2L: {r0['Max_V2L_Pct']:.1f}% | Mín: {r0['Min_V2L_Pct']:.1f}%\n"
-                         f"h Cohen: {r0['Cohen_h_Max']:.2f} | OR: {r0['OR_vs_Basal']:.1f}x\n"
-                         f"{r0['Affectation_State']}",
+                    lx, ly, text=f"Estado: {cat_txt}",
                     anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#1C2833"
                 )
 
-    def _draw_milestones_bars(self, W, H):
+    def _draw_milestones_comparison(self, W, H):
         if self.sum_df.empty:
             return
-        ml, mr, mt, mb = 58, 20, 28, 42
-        gap = 55
-        pw = max(140, (W - ml - mr - gap) // 2)
+        ml, mr, mt, mb = 65, 20, 26, 44
+        gap = 25
+        avail_w = max(240, W - ml - mr - gap)
+        pw = avail_w / 2.0
         ph = max(90, H - mt - mb)
         b1 = (ml, mt, ml + pw, mt + ph)
         b2 = (ml + pw + gap, mt, ml + 2 * pw + gap, mt + ph)
 
         self.canvas.create_rectangle(*b1, fill="#FCFDFE", outline="#333333")
         self.canvas.create_rectangle(*b2, fill="#FCFDFE", outline="#333333")
-        self.canvas.create_text((b1[0] + b1[2]) // 2, b1[1] - 12, text="A. Hitos Temporales: T_onset (Azul), T50 Efecto (Naranja), T_máx (Rojo)", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
-        self.canvas.create_text((b2[0] + b2[2]) // 2, b2[1] - 12, text="B. Proporción en Efecto Máximo: % Afectados V2L (Rojo) vs % No Afectados V2R (Verde)", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
+        self.canvas.create_text((b1[0] + b1[2]) // 2, b1[1] - 12, text=t("canvas_cat_milestones_a"), font=("DejaVu Sans", 8, "bold"), fill="#002B49")
+        self.canvas.create_text((b2[0] + b2[2]) // 2, b2[1] - 12, text=t("canvas_cat_milestones_b"), font=("DejaVu Sans", 8, "bold"), fill="#002B49")
 
         df_p = self.sum_df.sort_values(['Peptide', 'Concentration_uM']).reset_index(drop=True)
         n_bars = len(df_p)
@@ -231,7 +245,7 @@ class NativeCategoricalProportionsCanvas(tk.Frame):
         cw = (x1 - x0) / max(1, n_cols)
         ch = (y1 - y0) / max(1, n_rows)
 
-        self.canvas.create_text((x0 + x1) // 2, y0 - 12, text="Mapa de Calor: % de Eventos Afectados (V2L) por Ventana de Tiempo", font=("DejaVu Sans", 9, "bold"), fill="#002B49")
+        self.canvas.create_text((x0 + x1) // 2, y0 - 12, text=t("canvas_cat_heatmap_title"), font=("DejaVu Sans", 9, "bold"), fill="#002B49")
 
         def val_to_hex(pct):
             f = float(np.clip(pct / 100.0, 0.0, 1.0))
@@ -272,7 +286,7 @@ class NativeCategoricalProportionsCanvas(tk.Frame):
         xmin, xmax = -60.0, 600.0
 
         self.canvas.create_rectangle(x0, y0, x1, y1, fill="#FCFDFE", outline="#333333")
-        self.canvas.create_text((x0 + x1) // 2, y0 - 12, text="Velocidad Instantánea de Conversión d(%V2L)/dt (%/s)", font=("DejaVu Sans", 9, "bold"), fill="#002B49")
+        self.canvas.create_text((x0 + x1) // 2, y0 - 12, text=t("canvas_cat_rate_title"), font=("DejaVu Sans", 9, "bold"), fill="#002B49")
 
         sub = self.win_df.copy()
         sub['CID'] = sub.apply(lambda r: f"{r['Peptide']} | {r['Cell_Line']} | {r['Concentration_uM']:.2f} µM", axis=1)
@@ -284,29 +298,38 @@ class NativeCategoricalProportionsCanvas(tk.Frame):
             py = y1 - (np.clip(rv, 0.0, max_rate) / max_rate) * ph
             return px, py
 
-        for gy in np.linspace(0, max_rate, 5):
-            _, py = to_px(0, gy)
-            self.canvas.create_line(x0, py, x1, py, fill="#E5E8E8", dash=(2, 3))
-            self.canvas.create_text(x0 - 6, py, text=f"{gy:.2f}", anchor="e", font=("DejaVu Sans", 8))
-
-        for tx in [0, 120, 240, 360, 480, 600]:
+        for tx in [0, 100, 200, 300, 400, 500, 600]:
             px, _ = to_px(tx, 0)
             self.canvas.create_line(px, y0, px, y1, fill="#E5E8E8", dash=(2, 3))
             self.canvas.create_text(px, y1 + 10, text=f"{tx}s", font=("DejaVu Sans", 8))
 
+        for gy in np.linspace(0.0, max_rate, 5):
+            _, py = to_px(0, gy)
+            self.canvas.create_line(x0, py, x1, py, fill="#E5E8E8", dash=(2, 3))
+            self.canvas.create_text(x0 - 6, py, text=f"{gy:.2f}", anchor="e", font=("DejaVu Sans", 8))
+
+        palette = ["#1B4F72", "#2874A6", "#117864", "#D35400", "#922B21", "#6C3483", "#2E4053"]
         lx, ly = x1 + 10, y0 + 4
-        self.canvas.create_text(lx, ly, text="Velocidad d(%V2L)/dt:", anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
+        self.canvas.create_text(lx, ly, text=t("canvas_cat_rate_legend"), anchor="nw", font=("DejaVu Sans", 8, "bold"), fill="#002B49")
         ly += 16
 
-        for idx_c, cid in enumerate(unique_cids[:8]):
-            c_df = sub[sub['CID'] == cid].sort_values('Time_Window')
-            col = CURVE_PALETTE[idx_c % len(CURVE_PALETTE)]
+        for i, cid in enumerate(unique_cids[:7]):
+            col = palette[i % len(palette)]
+            c_data = sub[sub['CID'] == cid].sort_values('Time_Window')
+            if len(c_data) < 2 or 'Inst_Conversion_Rate_pct_s' not in c_data:
+                continue
+
             pts = []
-            if 'Inst_Conversion_Rate_pct_s' in c_df:
-                for tv, rv in zip(c_df['Time_Window'].values, c_df['Inst_Conversion_Rate_pct_s'].values):
-                    pts.extend(to_px(float(tv), max(0.0, float(rv))))
-                if len(pts) >= 4:
-                    self.canvas.create_line(pts, fill=col, width=2)
+            for _, r in c_data.iterrows():
+                tw = float(r['Time_Window'])
+                rate_v = float(r['Inst_Conversion_Rate_pct_s'])
+                pts.extend(to_px(tw, rate_v))
+
+            if len(pts) >= 4:
+                self.canvas.create_line(pts, fill=col, width=2)
+            for px, py in zip(pts[0::2], pts[1::2]):
+                self.canvas.create_oval(px - 2.5, py - 2.5, px + 2.5, py + 2.5, fill=col, outline="white")
+
             self.canvas.create_line(lx, ly + 6, lx + 14, ly + 6, fill=col, width=2)
             self.canvas.create_text(lx + 18, ly, text=cid[:26], anchor="nw", font=("DejaVu Sans", 8), fill="#1C2833")
-            ly += 14
+            ly += 15

@@ -224,7 +224,7 @@ class FlowCytometryKineticWorkstation:
         # 2. Reconstruir Menú
         self._setup_menubar()
 
-        # 3. Pestañas
+        # 3. Pestañas Principales
         if hasattr(self, 'notebook') and hasattr(self, 'tab_ingest'):
             self.notebook.tab(self.tab_ingest, text=t("tab_1_title"))
             self.notebook.tab(self.tab_preanalysis, text=t("tab_2_title"))
@@ -232,7 +232,7 @@ class FlowCytometryKineticWorkstation:
             self.notebook.tab(self.tab_prereport, text=t("tab_4_title"))
             self.notebook.tab(self.tab_finalreport, text=t("tab_5_title"))
 
-        # 4. Pestaña 1
+        # 4. Pestaña 1 (Ingesta / Carga)
         if hasattr(self, 'lblfrm_guide'):
             self.lblfrm_guide.config(text=t("tab1_guide_title"))
         if hasattr(self, 'lbl_guide_txt'):
@@ -266,7 +266,7 @@ class FlowCytometryKineticWorkstation:
         if hasattr(self, 'lblfrm_tbl'):
             self.lblfrm_tbl.config(text=t("tab1_tbl_title"))
 
-        # 5. Encabezados de tabla de archivos
+        # Encabezados de tabla de archivos (Pestaña 1)
         if hasattr(self, 'tree'):
             self.tree.heading("Filename", text=t("col_filename"))
             self.tree.heading("Compound", text=t("col_compound"))
@@ -275,6 +275,243 @@ class FlowCytometryKineticWorkstation:
             self.tree.heading("Concentration_uM", text=t("col_concentration"))
             self.tree.heading("Replicate", text=t("col_replicate"))
             self.tree.heading("Exclusion_s", text=t("col_exclusion"))
+
+        # 5. Pestaña 2 (Pre-Análisis)
+        if hasattr(self, 'lblfrm_tab2_gate'):
+            self.lblfrm_tab2_gate.config(text=t("tab2_gate_title"))
+        if hasattr(self, 'lbl_tab2_perm_chan'):
+            self.lbl_tab2_perm_chan.config(text=t("tab2_perm_channel"))
+        if hasattr(self, 'lbl_tab2_fsc_min'):
+            self.lbl_tab2_fsc_min.config(text=t("tab2_fsc_min"))
+        if hasattr(self, 'lbl_tab2_fsc_max'):
+            self.lbl_tab2_fsc_max.config(text=t("tab2_fsc_max"))
+        if hasattr(self, 'lbl_tab2_ssc_min'):
+            self.lbl_tab2_ssc_min.config(text=t("tab2_ssc_min"))
+        if hasattr(self, 'lbl_tab2_ssc_max'):
+            self.lbl_tab2_ssc_max.config(text=t("tab2_ssc_max"))
+        if hasattr(self, 'lbl_tab2_v1l'):
+            self.lbl_tab2_v1l.config(text=t("tab2_v1l_excl"))
+        if hasattr(self, 'lbl_tab2_v2l'):
+            self.lbl_tab2_v2l.config(text=t("tab2_v2l_cutoff"))
+        if hasattr(self, 'lbl_tab2_bin'):
+            self.lbl_tab2_bin.config(text=t("tab2_bin_size"))
+        if hasattr(self, 'lbl_tab2_ymode'):
+            self.lbl_tab2_ymode.config(text=t("tab2_hist_ymode"))
+        if hasattr(self, 'lbl_tab2_scope'):
+            self.lbl_tab2_scope.config(text=t("tab2_cutoff_scope"))
+
+        if hasattr(self, 'cmb_tab2_hist_ymode'):
+            curr_ymode = self.var_hist_ymode.get()
+            is_pct = "Porcentaje" in curr_ymode or "Percentage" in curr_ymode
+            self.cmb_tab2_hist_ymode['values'] = ["Porcentaje (%)", "N° Eventos"] if lang_code == "es" else ["Percentage (%)", "Event Count"]
+            self.var_hist_ymode.set(("Porcentaje (%)" if is_pct else "N° Eventos") if lang_code == "es" else ("Percentage (%)" if is_pct else "Event Count"))
+
+        if hasattr(self, 'cmb_tab2_cutoff_scope'):
+            curr_scope = self.var_cutoff_scope.get()
+            is_disc = "Discriminado" in curr_scope or "Selected" in curr_scope or "Discriminated" in curr_scope
+            self.cmb_tab2_cutoff_scope['values'] = [t("tab2_scope_global"), t("tab2_scope_selected")]
+            self.var_cutoff_scope.set(t("tab2_scope_selected") if is_disc else t("tab2_scope_global"))
+
+        if hasattr(self, 'btn_tab2_apply_all'):
+            self.btn_tab2_apply_all.config(text=t("tab2_btn_apply_all"))
+        if hasattr(self, 'btn_tab2_apply_sel'):
+            self.btn_tab2_apply_sel.config(text=t("tab2_btn_apply_sel"))
+        if hasattr(self, 'btn_tab2_auto_cc'):
+            self.btn_tab2_auto_cc.config(text=t("tab2_btn_auto_cc"))
+        if hasattr(self, 'lbl_tab2_plot1_mode'):
+            self.lbl_tab2_plot1_mode.config(text=t("tab2_plot1_mode"))
+
+        if hasattr(self, 'cmb_tab2_plot1_mode'):
+            curr_pm = self.var_perm_display_mode.get()
+            self.cmb_tab2_plot1_mode['values'] = [t("tab2_mode_cont"), t("tab2_mode_cat"), t("tab2_mode_dual")]
+            if "Dual" in curr_pm:
+                self.var_perm_display_mode.set(t("tab2_mode_dual"))
+            elif "Categ" in curr_pm:
+                self.var_perm_display_mode.set(t("tab2_mode_cat"))
+            else:
+                self.var_perm_display_mode.set(t("tab2_mode_cont"))
+
+        if hasattr(self, 'chk_tab2_scatter_norm'):
+            self.chk_tab2_scatter_norm.config(text=t("tab2_chk_scatter_norm"))
+
+        if hasattr(self, 'lblfrm_tab2_sel'):
+            self.lblfrm_tab2_sel.config(text=t("tab2_sel_title"))
+        if hasattr(self, 'lbl_tab2_compounds'):
+            self.lbl_tab2_compounds.config(text=t("tab2_compounds"))
+        if hasattr(self, 'lbl_tab2_cells'):
+            self.lbl_tab2_cells.config(text=t("tab2_cell_lines"))
+        if hasattr(self, 'lbl_tab2_doses'):
+            self.lbl_tab2_doses.config(text=t("tab2_doses"))
+        if hasattr(self, 'btn_tab2_sel_all'):
+            self.btn_tab2_sel_all.config(text=t("tab2_btn_sel_all"))
+        if hasattr(self, 'btn_tab2_refresh_plots'):
+            self.btn_tab2_refresh_plots.config(text=t("tab2_btn_refresh"))
+
+        if hasattr(self, 'lblfrm_tab2_thresh'):
+            self.lblfrm_tab2_thresh.config(text=t("tab2_thresh_title"))
+        if hasattr(self, 'lbl_tab2_active_curve'):
+            self.lbl_tab2_active_curve.config(text=t("tab2_active_curve"))
+        if hasattr(self, 'rad_tab2_thresh_auto'):
+            self.rad_tab2_thresh_auto.config(text=t("tab2_radio_auto"))
+        if hasattr(self, 'rad_tab2_thresh_manual'):
+            self.rad_tab2_thresh_manual.config(text=t("tab2_radio_manual"))
+        if hasattr(self, 'btn_tab2_auto_all'):
+            self.btn_tab2_auto_all.config(text=t("tab2_btn_auto_all"))
+        if hasattr(self, 'btn_tab2_auto_active'):
+            self.btn_tab2_auto_active.config(text=t("tab2_btn_auto_active"))
+        if hasattr(self, 'lbl_tab2_tlag'):
+            self.lbl_tab2_tlag.config(text=t("tab2_tlag_lbl"))
+        if hasattr(self, 'lbl_tab2_tmax'):
+            self.lbl_tab2_tmax.config(text=t("tab2_tmax_lbl"))
+
+        if hasattr(self, 'lblfrm_tab2_cut_tbl'):
+            self.lblfrm_tab2_cut_tbl.config(text=t("tab2_cut_tbl_title"))
+        if hasattr(self, 'btn_tab2_edit_sample'):
+            self.btn_tab2_edit_sample.config(text=t("tab2_btn_edit_sample"))
+        if hasattr(self, 'btn_tab2_export_cutoffs'):
+            self.btn_tab2_export_cutoffs.config(text=t("tab2_btn_export_csv"))
+        if hasattr(self, 'btn_tab2_goto_cat'):
+            self.btn_tab2_goto_cat.config(text=t("tab2_btn_go_cat"))
+
+        # Encabezados de tabla de Cut-Offs por Muestra
+        if hasattr(self, 'tree_sample_cutoffs'):
+            self.tree_sample_cutoffs.heading("Muestra", text=t("tab2_col_sample"))
+            self.tree_sample_cutoffs.heading("Scope", text=t("tab2_col_scope"))
+            self.tree_sample_cutoffs.heading("V1L_Log", text=t("tab2_col_v1l"))
+            self.tree_sample_cutoffs.heading("V2L_Log", text=t("tab2_col_v2l"))
+            self.tree_sample_cutoffs.heading("FSC_Min", text=t("tab2_col_fsc"))
+            self.tree_sample_cutoffs.heading("SSC_Min", text=t("tab2_col_ssc"))
+            self.tree_sample_cutoffs.heading("T_lag_s", text=t("tab2_col_tlag"))
+            self.tree_sample_cutoffs.heading("T_max_s", text=t("tab2_col_tmax"))
+            self.tree_sample_cutoffs.heading("Modo_T", text=t("tab2_col_mode"))
+            self.tree_sample_cutoffs.heading("V2L_Max_Pct", text=t("tab2_col_v2l_max"))
+
+        # 6. Pestaña 3 (Panel Categórico y Submenús de Tablas)
+        if hasattr(self, 'lblfrm_tab3_ctrl'):
+            self.lblfrm_tab3_ctrl.config(text=t("tab3_ctrl_title"))
+        if hasattr(self, 'lbl_tab3_pep'):
+            self.lbl_tab3_pep.config(text=t("tab3_compound"))
+        if hasattr(self, 'lbl_tab3_cell'):
+            self.lbl_tab3_cell.config(text=t("tab3_cell_line"))
+        if hasattr(self, 'lbl_tab3_curve'):
+            self.lbl_tab3_curve.config(text=t("tab3_curve"))
+        if hasattr(self, 'lbl_tab3_vis'):
+            self.lbl_tab3_vis.config(text=t("tab3_vis_mode"))
+        if hasattr(self, 'cmb_cat_vis'):
+            curr_cv = self.var_cat_vis_mode.get()
+            self.cmb_cat_vis['values'] = [
+                t("tab3_vis_opt1"),
+                t("tab3_vis_opt2"),
+                t("tab3_vis_opt3"),
+                t("tab3_vis_opt4")
+            ]
+            if "Hitos" in curr_cv or "Milestone" in curr_cv:
+                self.var_cat_vis_mode.set(t("tab3_vis_opt2"))
+            elif "Calor" in curr_cv or "Heatmap" in curr_cv:
+                self.var_cat_vis_mode.set(t("tab3_vis_opt3"))
+            elif "Velocidad" in curr_cv or "Instantaneous" in curr_cv:
+                self.var_cat_vis_mode.set(t("tab3_vis_opt4"))
+            else:
+                self.var_cat_vis_mode.set(t("tab3_vis_opt1"))
+
+        if hasattr(self, 'btn_tab3_recompute'):
+            self.btn_tab3_recompute.config(text=t("tab3_btn_recalc"))
+        if hasattr(self, 'btn_tab3_goto_final'):
+            self.btn_tab3_goto_final.config(text=t("tab3_btn_export_report"))
+
+        # Sub-pestañas / Submenús del panel categórico (cat_nb)
+        if hasattr(self, 'cat_nb'):
+            try:
+                self.cat_nb.tab(0, text=t("tab3_subtab_milestones"))
+                self.cat_nb.tab(1, text=t("tab3_subtab_windows"))
+                self.cat_nb.tab(2, text=t("tab3_subtab_tests"))
+                self.cat_nb.tab(3, text=t("tab3_subtab_insights"))
+            except Exception:
+                pass
+
+        # 7. Pestaña 4 (Pre-Reporte, Sub-notebook de 9 tablas y Previsualización)
+        if hasattr(self, 'lblfrm_tab4_ctrl'):
+            self.lblfrm_tab4_ctrl.config(text=t("tab4_ctrl_title"))
+        if hasattr(self, 'lbl_tab4_analyzer'):
+            self.lbl_tab4_analyzer.config(text=t("tab4_analyzer"))
+        if hasattr(self, 'lbl_tab4_stat_mode'):
+            self.lbl_tab4_stat_mode.config(text=t("tab4_stat_mode"))
+        if hasattr(self, 'lbl_tab4_fdr'):
+            self.lbl_tab4_fdr.config(text=t("tab4_fdr"))
+        if hasattr(self, 'lbl_tab4_bootstrap'):
+            self.lbl_tab4_bootstrap.config(text=t("tab4_bootstrap"))
+        if hasattr(self, 'btn_tab4_recompute'):
+            self.btn_tab4_recompute.config(text=t("tab4_btn_recalc"))
+        if hasattr(self, 'btn_tab4_explain'):
+            self.btn_tab4_explain.config(text=t("tab4_btn_explain"))
+
+        # Sub-pestañas / Submenús de las 9 tablas (tbl_notebook)
+        if hasattr(self, 'tbl_notebook'):
+            try:
+                self.tbl_notebook.tab(0, text=t("tab4_subtab_t0"))
+                self.tbl_notebook.tab(1, text=t("tab4_subtab_t1"))
+                self.tbl_notebook.tab(2, text=t("tab4_subtab_t2"))
+                self.tbl_notebook.tab(3, text=t("tab4_subtab_t3"))
+                self.tbl_notebook.tab(4, text=t("tab4_subtab_tcat"))
+                self.tbl_notebook.tab(5, text=t("tab4_subtab_t4"))
+                self.tbl_notebook.tab(6, text=t("tab4_subtab_t5"))
+                self.tbl_notebook.tab(7, text=t("tab4_subtab_t6"))
+                self.tbl_notebook.tab(8, text=t("tab4_subtab_ttimebin"))
+            except Exception:
+                pass
+
+        if hasattr(self, 'lblfrm_tab4_sat'):
+            self.lblfrm_tab4_sat.config(text=t("tab4_sat_title"))
+        if hasattr(self, 'lbl_tab4_prev_group'):
+            self.lbl_tab4_prev_group.config(text=t("tab4_sample_group"))
+        if hasattr(self, 'lbl_tab4_prev_mode'):
+            self.lbl_tab4_prev_mode.config(text=t("tab4_view"))
+        if hasattr(self, 'cmb_preview_mode'):
+            curr_vm = self.var_preview_mode.get()
+            self.cmb_preview_mode['values'] = [t("tab4_view_selected"), t("tab4_view_compare")]
+            if "Compar" in curr_vm:
+                self.var_preview_mode.set(t("tab4_view_compare"))
+            else:
+                self.var_preview_mode.set(t("tab4_view_selected"))
+
+        if hasattr(self, 'lblfrm_tab4_eq'):
+            self.lblfrm_tab4_eq.config(text=t("tab4_eq_title"))
+
+        # Encabezados de tabla de Ecuaciones R2
+        if hasattr(self, 'tree_model_eq_r2'):
+            self.tree_model_eq_r2.heading("Grupo", text=t("tab4_col_group"))
+            self.tree_model_eq_r2.heading("Modelo", text=t("tab4_col_model"))
+            self.tree_model_eq_r2.heading("Ecuacion_Evaluada", text=t("tab4_col_eq"))
+            self.tree_model_eq_r2.heading("R2_Grupo", text=t("tab4_col_r2_group"))
+            self.tree_model_eq_r2.heading("R2_Replicas", text=t("tab4_col_r2_reps"))
+            self.tree_model_eq_r2.heading("R2_Adj", text=t("tab4_col_r2_adj"))
+            self.tree_model_eq_r2.heading("RMSE", text=t("tab4_col_rmse"))
+
+        # 8. Pestaña 5 (Reporte Final)
+        if hasattr(self, 'lblfrm_tab5_top'):
+            self.lblfrm_tab5_top.config(text=t("tab5_top_title"))
+        if hasattr(self, 'lbl_tab5_outdir'):
+            self.lbl_tab5_outdir.config(text=t("tab5_outdir"))
+        if hasattr(self, 'btn_tab5_browse'):
+            self.btn_tab5_browse.config(text=t("tab5_btn_browse"))
+        if hasattr(self, 'lbl_tab5_rep_title'):
+            self.lbl_tab5_rep_title.config(text=t("tab5_rep_title"))
+        if hasattr(self, 'lbl_tab5_rep_author'):
+            self.lbl_tab5_rep_author.config(text=t("tab5_rep_author"))
+        if hasattr(self, 'btn_tab5_export_bundle'):
+            self.btn_tab5_export_bundle.config(text=t("tab5_btn_export_bundle"))
+        if hasattr(self, 'lblfrm_tab5_preview'):
+            self.lblfrm_tab5_preview.config(text=t("tab5_preview_title"))
+
+        # 9. Redibujar Gráficos Dinámicos
+        if hasattr(self, 'hist_cutoff_plot'):
+            self.hist_cutoff_plot.redraw()
+        if hasattr(self, 'multi_plot'):
+            self.multi_plot.redraw()
+        if hasattr(self, 'cat_prop_canvas'):
+            self.cat_prop_canvas.redraw()
+        if hasattr(self, 'sat_preview'):
+            self.sat_preview.redraw()
 
     def _build_main_layout(self):
         self._setup_menubar()
@@ -637,11 +874,11 @@ class FlowCytometryKineticWorkstation:
     def batch_edit_selected(self):
         selected = self.tree.selection()
         if not selected:
-            messagebox.showinfo("Selección", "Selecciona primero una o más filas en la tabla.", parent=self.root)
+            messagebox.showinfo(t("dialog_info"), t("dialog_select_row"), parent=self.root)
             return
 
         dlg = tk.Toplevel(self.root)
-        dlg.title(f"Edición en Lote ({len(selected)} archivos)")
+        dlg.title(t("batch_edit_title").format(len(selected)))
         dlg.geometry("410x290")
         dlg.transient(self.root)
         dlg.grab_set()
@@ -650,12 +887,12 @@ class FlowCytometryKineticWorkstation:
         frm.pack(fill="both", expand=True)
 
         fields = [
-            ("Compuesto:", "Compound"),
-            ("Línea Celular:", "Cell_Line"),
-            ("Rol:", "Sample_Role"),
-            ("Dosis (µM):", "Concentration_uM"),
-            ("Réplica:", "Replicate"),
-            ("Exclusión t_start (s):", "Exclusion_s")
+            (t("batch_edit_compound"), "Compound"),
+            (t("batch_edit_cell"), "Cell_Line"),
+            (t("batch_edit_role"), "Sample_Role"),
+            (t("batch_edit_dose"), "Concentration_uM"),
+            (t("batch_edit_replicate"), "Replicate"),
+            (t("batch_edit_exclusion"), "Exclusion_s")
         ]
         entries = {}
         for idx, (lbl, key) in enumerate(fields):
@@ -687,7 +924,7 @@ class FlowCytometryKineticWorkstation:
                 self.tree.item(row_id, values=vals)
             dlg.destroy()
 
-        ttk.Button(dlg, text="Aplicar Cambios", command=apply_batch).pack(pady=8)
+        ttk.Button(dlg, text=t("batch_edit_btn_apply"), command=apply_batch).pack(pady=8)
 
     def remove_selected(self):
         for row_id in self.tree.selection():
@@ -709,124 +946,142 @@ class FlowCytometryKineticWorkstation:
         left_panel = ttk.Frame(paned, width=460)
         paned.add(left_panel, weight=0)
 
-        f_gate = ttk.LabelFrame(left_panel, text=" 1. Canal, Prefiltros (FSC/SSC/V1L) y Cut-Off V2L/V2R ", padding=5)
-        f_gate.pack(fill="x", padx=4, pady=2)
+        self.lblfrm_tab2_gate = ttk.LabelFrame(left_panel, text=t("tab2_gate_title"), padding=5)
+        self.lblfrm_tab2_gate.pack(fill="x", padx=4, pady=2)
 
-        ttk.Label(f_gate, text="Canal Permeabilidad:", font=("DejaVu Sans", 8, "bold")).grid(row=0, column=0, columnspan=2, sticky="w", pady=1)
+        self.lbl_tab2_perm_chan = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_perm_channel"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_perm_chan.grid(row=0, column=0, columnspan=2, sticky="w", pady=1)
         self.cmb_perm_channel = ttk.Combobox(
-            f_gate, textvariable=self.var_perm_channel, state="readonly", width=22,
+            self.lblfrm_tab2_gate, textvariable=self.var_perm_channel, state="readonly", width=22,
             values=["FITC (Por defecto)", "FITC-A", "FL1-A", "FITC-H", "FL1-H", "BL1-A"]
         )
         self.cmb_perm_channel.grid(row=0, column=2, columnspan=2, sticky="ew", padx=3, pady=1)
         self.cmb_perm_channel.bind("<<ComboboxSelected>>", lambda e: self.run_preanalysis_ingestion())
 
-        ttk.Label(f_gate, text="FSC-A Mín (>):").grid(row=1, column=0, sticky="w", pady=1)
-        self.ent_fsc_min = ttk.Entry(f_gate, width=9)
+        self.lbl_tab2_fsc_min = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_fsc_min"))
+        self.lbl_tab2_fsc_min.grid(row=1, column=0, sticky="w", pady=1)
+        self.ent_fsc_min = ttk.Entry(self.lblfrm_tab2_gate, width=9)
         self.ent_fsc_min.insert(0, "50000")
         self.ent_fsc_min.grid(row=1, column=1, padx=2, pady=1)
 
-        ttk.Label(f_gate, text="FSC-A Máx:").grid(row=1, column=2, sticky="w", pady=1)
-        self.ent_fsc_max = ttk.Entry(f_gate, width=9)
-        self.ent_fsc_max.insert(0, "Sin límite")
+        self.lbl_tab2_fsc_max = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_fsc_max"))
+        self.lbl_tab2_fsc_max.grid(row=1, column=2, sticky="w", pady=1)
+        self.ent_fsc_max = ttk.Entry(self.lblfrm_tab2_gate, width=9)
+        self.ent_fsc_max.insert(0, t("tab2_no_limit"))
         self.ent_fsc_max.grid(row=1, column=3, padx=2, pady=1)
 
-        ttk.Label(f_gate, text="SSC-A Mín (>):").grid(row=2, column=0, sticky="w", pady=1)
-        self.ent_ssc_min = ttk.Entry(f_gate, width=9)
+        self.lbl_tab2_ssc_min = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_ssc_min"))
+        self.lbl_tab2_ssc_min.grid(row=2, column=0, sticky="w", pady=1)
+        self.ent_ssc_min = ttk.Entry(self.lblfrm_tab2_gate, width=9)
         self.ent_ssc_min.insert(0, "10000")
         self.ent_ssc_min.grid(row=2, column=1, padx=2, pady=1)
 
-        ttk.Label(f_gate, text="SSC-A Máx:").grid(row=2, column=2, sticky="w", pady=1)
-        self.ent_ssc_max = ttk.Entry(f_gate, width=9)
-        self.ent_ssc_max.insert(0, "Sin límite")
+        self.lbl_tab2_ssc_max = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_ssc_max"))
+        self.lbl_tab2_ssc_max.grid(row=2, column=2, sticky="w", pady=1)
+        self.ent_ssc_max = ttk.Entry(self.lblfrm_tab2_gate, width=9)
+        self.ent_ssc_max.insert(0, t("tab2_no_limit"))
         self.ent_ssc_max.grid(row=2, column=3, padx=2, pady=1)
 
         # Cut-Off 1: Exclusión de fluorescencia V1L (omite células sin cargar / detritos)
-        ttk.Label(f_gate, text="Exclusión V1L (<log10):", foreground="#4A235A", font=("DejaVu Sans", 8, "bold")).grid(row=3, column=0, sticky="w", pady=1)
+        self.lbl_tab2_v1l = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_v1l_excl"), foreground="#4A235A", font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_v1l.grid(row=3, column=0, sticky="w", pady=1)
         self.var_log_excl_v1l = tk.DoubleVar(value=3.00)
-        self.ent_log_excl_v1l = ttk.Entry(f_gate, textvariable=self.var_log_excl_v1l, width=9)
+        self.ent_log_excl_v1l = ttk.Entry(self.lblfrm_tab2_gate, textvariable=self.var_log_excl_v1l, width=9)
         self.ent_log_excl_v1l.grid(row=3, column=1, padx=2, pady=1)
         self.ent_log_excl_v1l.bind("<Return>", lambda e: self.apply_prefilter_by_current_scope())
 
         # Cut-Off 2: Discriminación V2L (Afectados) vs V2R (No Afectados)
-        ttk.Label(f_gate, text="Cut-Off V2L/V2R (log10):", foreground="#C0392B", font=("DejaVu Sans", 8, "bold")).grid(row=3, column=2, sticky="w", pady=1)
+        self.lbl_tab2_v2l = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_v2l_cutoff"), foreground="#C0392B", font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_v2l.grid(row=3, column=2, sticky="w", pady=1)
         self.var_log_cutoff = tk.DoubleVar(value=4.85)
-        self.ent_log_cutoff = ttk.Entry(f_gate, textvariable=self.var_log_cutoff, width=9)
+        self.ent_log_cutoff = ttk.Entry(self.lblfrm_tab2_gate, textvariable=self.var_log_cutoff, width=9)
         self.ent_log_cutoff.grid(row=3, column=3, padx=2, pady=1)
         self.ent_log_cutoff.bind("<Return>", lambda e: self.apply_prefilter_by_current_scope())
 
-        ttk.Label(f_gate, text="Bin Temporal (s):").grid(row=4, column=0, sticky="w", pady=1)
-        self.ent_bin_size = ttk.Entry(f_gate, width=9)
+        self.lbl_tab2_bin = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_bin_size"))
+        self.lbl_tab2_bin.grid(row=4, column=0, sticky="w", pady=1)
+        self.ent_bin_size = ttk.Entry(self.lblfrm_tab2_gate, width=9)
         self.ent_bin_size.insert(0, "15")
         self.ent_bin_size.grid(row=4, column=1, padx=2, pady=1)
 
-        ttk.Label(f_gate, text="Eje Y Hist.:").grid(row=4, column=2, sticky="w", pady=1)
+        self.lbl_tab2_ymode = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_hist_ymode"))
+        self.lbl_tab2_ymode.grid(row=4, column=2, sticky="w", pady=1)
         self.var_hist_ymode = tk.StringVar(value="Porcentaje (%)")
-        cmb_hym = ttk.Combobox(f_gate, textvariable=self.var_hist_ymode, state="readonly", width=11, values=["Porcentaje (%)", "N° Eventos"])
-        cmb_hym.grid(row=4, column=3, sticky="ew", padx=2, pady=1)
-        cmb_hym.bind("<<ComboboxSelected>>", lambda e: self.update_preanalysis_plots())
+        self.cmb_tab2_hist_ymode = ttk.Combobox(self.lblfrm_tab2_gate, textvariable=self.var_hist_ymode, state="readonly", width=11, values=["Porcentaje (%)", "N° Eventos"])
+        self.cmb_tab2_hist_ymode.grid(row=4, column=3, sticky="ew", padx=2, pady=1)
+        self.cmb_tab2_hist_ymode.bind("<<ComboboxSelected>>", lambda e: self.update_preanalysis_plots())
 
-        ttk.Label(f_gate, text="Alcance Filtro/Cut-Off:", font=("DejaVu Sans", 8, "bold")).grid(row=5, column=0, sticky="w", pady=1)
-        self.var_cutoff_scope = tk.StringVar(value="Global (Todas las muestras)")
-        cmb_scope = ttk.Combobox(
-            f_gate, textvariable=self.var_cutoff_scope, state="readonly", width=26,
-            values=["Global (Todas las muestras)", "Discriminado (Muestras seleccionadas)"]
+        self.lbl_tab2_scope = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_cutoff_scope"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_scope.grid(row=5, column=0, sticky="w", pady=1)
+        self.var_cutoff_scope = tk.StringVar(value=t("tab2_scope_global"))
+        self.cmb_tab2_cutoff_scope = ttk.Combobox(
+            self.lblfrm_tab2_gate, textvariable=self.var_cutoff_scope, state="readonly", width=26,
+            values=[t("tab2_scope_global"), t("tab2_scope_selected")]
         )
-        cmb_scope.grid(row=5, column=1, columnspan=3, sticky="ew", padx=2, pady=1)
+        self.cmb_tab2_cutoff_scope.grid(row=5, column=1, columnspan=3, sticky="ew", padx=2, pady=1)
 
-        btn_apply_frm = ttk.Frame(f_gate)
+        btn_apply_frm = ttk.Frame(self.lblfrm_tab2_gate)
         btn_apply_frm.grid(row=6, column=0, columnspan=4, sticky="ew", pady=2)
-        tk.Button(
-            btn_apply_frm, text="🌐 Aplicar a TODAS",
+        self.btn_tab2_apply_all = tk.Button(
+            btn_apply_frm, text=t("tab2_btn_apply_all"),
             bg="#1B4F72", fg="white", font=("DejaVu Sans", 8, "bold"),
             command=lambda: self.apply_prefilter_and_cutoffs(scope="global")
-        ).pack(side="left", expand=True, fill="x", padx=1)
-        tk.Button(
-            btn_apply_frm, text="🎯 Aplicar a SELECCIONADAS",
+        )
+        self.btn_tab2_apply_all.pack(side="left", expand=True, fill="x", padx=1)
+        self.btn_tab2_apply_sel = tk.Button(
+            btn_apply_frm, text=t("tab2_btn_apply_sel"),
             bg="#633974", fg="white", font=("DejaVu Sans", 8, "bold"),
             command=lambda: self.apply_prefilter_and_cutoffs(scope="selected")
-        ).pack(side="left", expand=True, fill="x", padx=1)
-        ttk.Button(
-            btn_apply_frm, text="Auto CC", width=8,
+        )
+        self.btn_tab2_apply_sel.pack(side="left", expand=True, fill="x", padx=1)
+        self.btn_tab2_auto_cc = ttk.Button(
+            btn_apply_frm, text=t("tab2_btn_auto_cc"), width=8,
             command=self.auto_calibrate_cutoff_from_cc
-        ).pack(side="left", padx=1)
+        )
+        self.btn_tab2_auto_cc.pack(side="left", padx=1)
 
-        ttk.Label(f_gate, text="Modo Gráfica 1:").grid(row=7, column=0, sticky="w", pady=1)
-        self.var_perm_display_mode = tk.StringVar(value="Dual (Continua + Afectados V2L %)")
-        cmb_pdisp = ttk.Combobox(
-            f_gate, textvariable=self.var_perm_display_mode, state="readonly", width=26,
+        self.lbl_tab2_plot1_mode = ttk.Label(self.lblfrm_tab2_gate, text=t("tab2_plot1_mode"))
+        self.lbl_tab2_plot1_mode.grid(row=7, column=0, sticky="w", pady=1)
+        self.var_perm_display_mode = tk.StringVar(value=t("tab2_mode_dual"))
+        self.cmb_tab2_plot1_mode = ttk.Combobox(
+            self.lblfrm_tab2_gate, textvariable=self.var_perm_display_mode, state="readonly", width=26,
             values=[
-                "Continua (Mediana FITC %)",
-                "Categórica (Afectados V2L % por Cut-Off)",
-                "Dual (Continua + Afectados V2L %)"
+                t("tab2_mode_cont"),
+                t("tab2_mode_cat"),
+                t("tab2_mode_dual")
             ]
         )
-        cmb_pdisp.grid(row=7, column=1, columnspan=3, sticky="ew", padx=2, pady=1)
-        cmb_pdisp.bind("<<ComboboxSelected>>", lambda e: self.update_preanalysis_plots())
+        self.cmb_tab2_plot1_mode.grid(row=7, column=1, columnspan=3, sticky="ew", padx=2, pady=1)
+        self.cmb_tab2_plot1_mode.bind("<<ComboboxSelected>>", lambda e: self.update_preanalysis_plots())
 
         self.var_scatter_norm = tk.BooleanVar(value=False)
-        ttk.Checkbutton(
-            f_gate, text="Mostrar FSC/SSC Normalizados (% vs Basal)",
+        self.chk_tab2_scatter_norm = ttk.Checkbutton(
+            self.lblfrm_tab2_gate, text=t("tab2_chk_scatter_norm"),
             variable=self.var_scatter_norm, command=self.update_preanalysis_plots
-        ).grid(row=8, column=0, columnspan=4, sticky="w", pady=1)
+        )
+        self.chk_tab2_scatter_norm.grid(row=8, column=0, columnspan=4, sticky="w", pady=1)
 
         self.lbl_gate_stats = ttk.Label(
-            f_gate, text="Canal: FITC | V1R Retenidos: -- | V1L Omitidos: --",
+            self.lblfrm_tab2_gate, text="Canal: FITC | V1R Retenidos: -- | V1L Omitidos: --",
             foreground="#117864", font=("DejaVu Sans", 8, "bold")
         )
         self.lbl_gate_stats.grid(row=9, column=0, columnspan=4, sticky="w")
 
-        f_sel = ttk.LabelFrame(left_panel, text=" 2. Selección Dinámica de Muestras a Graficar ", padding=4)
-        f_sel.pack(fill="x", padx=4, pady=1)
+        self.lblfrm_tab2_sel = ttk.LabelFrame(left_panel, text=t("tab2_sel_title"), padding=4)
+        self.lblfrm_tab2_sel.pack(fill="x", padx=4, pady=1)
 
-        sel_grid = ttk.Frame(f_sel)
+        sel_grid = ttk.Frame(self.lblfrm_tab2_sel)
         sel_grid.pack(fill="x")
         sel_grid.columnconfigure(0, weight=1)
         sel_grid.columnconfigure(1, weight=1)
         sel_grid.columnconfigure(2, weight=1)
 
-        ttk.Label(sel_grid, text="Compuestos:", font=("DejaVu Sans", 8, "bold")).grid(row=0, column=0, sticky="w", padx=2)
-        ttk.Label(sel_grid, text="Líneas:", font=("DejaVu Sans", 8, "bold")).grid(row=0, column=1, sticky="w", padx=2)
-        ttk.Label(sel_grid, text="Dosis (µM):", font=("DejaVu Sans", 8, "bold")).grid(row=0, column=2, sticky="w", padx=2)
+        self.lbl_tab2_compounds = ttk.Label(sel_grid, text=t("tab2_compounds"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_compounds.grid(row=0, column=0, sticky="w", padx=2)
+        self.lbl_tab2_cells = ttk.Label(sel_grid, text=t("tab2_cell_lines"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_cells.grid(row=0, column=1, sticky="w", padx=2)
+        self.lbl_tab2_doses = ttk.Label(sel_grid, text=t("tab2_doses"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_doses.grid(row=0, column=2, sticky="w", padx=2)
 
         self.lst_compounds = tk.Listbox(sel_grid, selectmode="extended", height=3, width=13, exportselection=False)
         self.lst_compounds.grid(row=1, column=0, sticky="ew", padx=2, pady=1)
@@ -840,50 +1095,59 @@ class FlowCytometryKineticWorkstation:
         self.lst_doses.grid(row=1, column=2, sticky="ew", padx=2, pady=1)
         self.lst_doses.bind("<<ListboxSelect>>", lambda e: self.update_preanalysis_plots())
 
-        btn_sel_frame = ttk.Frame(f_sel)
+        btn_sel_frame = ttk.Frame(self.lblfrm_tab2_sel)
         btn_sel_frame.pack(fill="x", pady=1)
-        ttk.Button(btn_sel_frame, text="Seleccionar Todas", command=self.select_all_filters).pack(side="left", expand=True, fill="x", padx=2)
-        ttk.Button(btn_sel_frame, text="Refrescar Gráficas", command=self.update_preanalysis_plots).pack(side="left", expand=True, fill="x", padx=2)
+        self.btn_tab2_sel_all = ttk.Button(btn_sel_frame, text=t("tab2_btn_sel_all"), command=self.select_all_filters)
+        self.btn_tab2_sel_all.pack(side="left", expand=True, fill="x", padx=2)
+        self.btn_tab2_refresh_plots = ttk.Button(btn_sel_frame, text=t("tab2_btn_refresh"), command=self.update_preanalysis_plots)
+        self.btn_tab2_refresh_plots.pack(side="left", expand=True, fill="x", padx=2)
 
-        f_thresh = ttk.LabelFrame(left_panel, text=" 3. Ajuste de T_lag y T_max por Curva (Arrastrable) ", padding=4)
-        f_thresh.pack(fill="x", padx=4, pady=1)
+        self.lblfrm_tab2_thresh = ttk.LabelFrame(left_panel, text=t("tab2_thresh_title"), padding=4)
+        self.lblfrm_tab2_thresh.pack(fill="x", padx=4, pady=1)
 
-        curv_row = ttk.Frame(f_thresh)
+        curv_row = ttk.Frame(self.lblfrm_tab2_thresh)
         curv_row.pack(fill="x", pady=1)
-        ttk.Label(curv_row, text="Curva Activa:", font=("DejaVu Sans", 8, "bold")).pack(side="left")
+        self.lbl_tab2_active_curve = ttk.Label(curv_row, text=t("tab2_active_curve"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab2_active_curve.pack(side="left")
         self.cmb_active_curve = ttk.Combobox(curv_row, state="readonly", width=29)
         self.cmb_active_curve.pack(side="left", fill="x", expand=True, padx=3)
         self.cmb_active_curve.bind("<<ComboboxSelected>>", self.on_active_curve_selected)
 
         self.var_thresh_mode = tk.StringVar(value="auto")
-        mode_frm = ttk.Frame(f_thresh)
+        mode_frm = ttk.Frame(self.lblfrm_tab2_thresh)
         mode_frm.pack(fill="x", pady=1)
-        ttk.Radiobutton(
-            mode_frm, text="Automático", value="auto",
+        self.rad_tab2_thresh_auto = ttk.Radiobutton(
+            mode_frm, text=t("tab2_radio_auto"), value="auto",
             variable=self.var_thresh_mode, command=self.on_threshold_mode_toggle
-        ).pack(side="left", padx=2)
-        ttk.Radiobutton(
-            mode_frm, text="Manual / Arrastrar", value="manual",
+        )
+        self.rad_tab2_thresh_auto.pack(side="left", padx=2)
+        self.rad_tab2_thresh_manual = ttk.Radiobutton(
+            mode_frm, text=t("tab2_radio_manual"), value="manual",
             variable=self.var_thresh_mode, command=self.on_threshold_mode_toggle
-        ).pack(side="left", padx=2)
-        tk.Button(
-            mode_frm, text="⚡ Auto (Todas)", bg="#117864", fg="white",
+        )
+        self.rad_tab2_thresh_manual.pack(side="left", padx=2)
+        self.btn_tab2_auto_all = tk.Button(
+            mode_frm, text=t("tab2_btn_auto_all"), bg="#117864", fg="white",
             font=("DejaVu Sans", 7, "bold"), padx=4, pady=0,
             command=self.reset_all_curves_to_auto_tlag_tmax
-        ).pack(side="right", padx=1)
-        tk.Button(
-            mode_frm, text="⚡ Auto (Activa)", bg="#1B4F72", fg="white",
+        )
+        self.btn_tab2_auto_all.pack(side="right", padx=1)
+        self.btn_tab2_auto_active = tk.Button(
+            mode_frm, text=t("tab2_btn_auto_active"), bg="#1B4F72", fg="white",
             font=("DejaVu Sans", 7, "bold"), padx=4, pady=0,
             command=self.reset_active_curve_to_auto_tlag_tmax
-        ).pack(side="right", padx=1)
+        )
+        self.btn_tab2_auto_active.pack(side="right", padx=1)
 
-        sliders_grid = ttk.Frame(f_thresh)
+        sliders_grid = ttk.Frame(self.lblfrm_tab2_thresh)
         sliders_grid.pack(fill="x")
         sliders_grid.columnconfigure(0, weight=1)
         sliders_grid.columnconfigure(1, weight=1)
 
-        ttk.Label(sliders_grid, text="T_lag (s) [Azul :]:", font=("DejaVu Sans", 8)).grid(row=0, column=0, sticky="w")
-        ttk.Label(sliders_grid, text="T_max (s) [Rojo -.]:", font=("DejaVu Sans", 8)).grid(row=0, column=1, sticky="w")
+        self.lbl_tab2_tlag = ttk.Label(sliders_grid, text=t("tab2_tlag_lbl"), font=("DejaVu Sans", 8))
+        self.lbl_tab2_tlag.grid(row=0, column=0, sticky="w")
+        self.lbl_tab2_tmax = ttk.Label(sliders_grid, text=t("tab2_tmax_lbl"), font=("DejaVu Sans", 8))
+        self.lbl_tab2_tmax.grid(row=0, column=1, sticky="w")
 
         self.var_tlag_slider = tk.DoubleVar(value=60.0)
         self.scl_tlag = tk.Scale(
@@ -904,22 +1168,22 @@ class FlowCytometryKineticWorkstation:
         self.scl_tmax.bind("<ButtonRelease-1>", lambda e: self.on_slider_thresh_change(e, final=True))
 
         self.lbl_active_metrics = tk.Label(
-            f_thresh,
+            self.lblfrm_tab2_thresh,
             text="T_lag: -- s | T_max: -- s\nV_active: -- %/s | V2L Máx: -- % | LT50: -- s",
             bg="#EBF5FB", fg="#002B49", font=("DejaVu Sans", 8, "bold"),
             relief="groove", pady=3
         )
         self.lbl_active_metrics.pack(fill="x", pady=2)
 
-        # Caja 4: Tabla Interactiva de Cut-Offs y Ventanas por Muestra (Clic = Seleccionar, Doble Clic = Editar)
-        f_cut_tbl = ttk.LabelFrame(
+        # Caja 4: Tabla Interactiva de Cut-Offs por Muestra
+        self.lblfrm_tab2_cut_tbl = ttk.LabelFrame(
             left_panel,
-            text=" 4. Tabla Interactiva de Cut-Offs por Muestra (Doble Clic en Celda = Editar) ",
+            text=t("tab2_cut_tbl_title"),
             padding=4
         )
-        f_cut_tbl.pack(fill="both", expand=True, padx=4, pady=2)
+        self.lblfrm_tab2_cut_tbl.pack(fill="both", expand=True, padx=4, pady=2)
 
-        tbl_container = ttk.Frame(f_cut_tbl)
+        tbl_container = ttk.Frame(self.lblfrm_tab2_cut_tbl)
         tbl_container.pack(fill="both", expand=True)
 
         cut_cols = (
@@ -930,16 +1194,16 @@ class FlowCytometryKineticWorkstation:
             tbl_container, columns=cut_cols, show="headings", height=6, selectmode="browse"
         )
         col_specs = [
-            ("Muestra", "Muestra (Comp | Cél | µM)", 150, "w"),
-            ("Scope", "Alcance", 74, "center"),
-            ("V1L_Log", "V1L <log", 58, "center"),
-            ("V2L_Log", "CutOff V2L", 68, "center"),
-            ("FSC_Min", "FSC Mín", 62, "center"),
-            ("SSC_Min", "SSC Mín", 62, "center"),
-            ("T_lag_s", "T_lag(s)", 56, "center"),
-            ("T_max_s", "T_max(s)", 56, "center"),
-            ("Modo_T", "Modo T", 56, "center"),
-            ("V2L_Max_Pct", "%V2L Máx", 64, "center")
+            ("Muestra", t("tab2_col_sample"), 150, "w"),
+            ("Scope", t("tab2_col_scope"), 74, "center"),
+            ("V1L_Log", t("tab2_col_v1l"), 58, "center"),
+            ("V2L_Log", t("tab2_col_v2l"), 68, "center"),
+            ("FSC_Min", t("tab2_col_fsc"), 62, "center"),
+            ("SSC_Min", t("tab2_col_ssc"), 62, "center"),
+            ("T_lag_s", t("tab2_col_tlag"), 56, "center"),
+            ("T_max_s", t("tab2_col_tmax"), 56, "center"),
+            ("Modo_T", t("tab2_col_mode"), 56, "center"),
+            ("V2L_Max_Pct", t("tab2_col_v2l_max"), 64, "center")
         ]
         for cid, heading_txt, w_px, anc in col_specs:
             self.tree_sample_cutoffs.heading(cid, text=heading_txt)
@@ -958,23 +1222,26 @@ class FlowCytometryKineticWorkstation:
         self.tree_sample_cutoffs.bind("<<TreeviewSelect>>", self.on_select_sample_cutoff_table)
         self.tree_sample_cutoffs.bind("<Double-1>", self.on_double_click_sample_cutoff_table)
 
-        cut_btn_row = ttk.Frame(f_cut_tbl)
+        cut_btn_row = ttk.Frame(self.lblfrm_tab2_cut_tbl)
         cut_btn_row.pack(fill="x", pady=2)
-        tk.Button(
-            cut_btn_row, text="✏️ Editar Muestra Sel.",
+        self.btn_tab2_edit_sample = tk.Button(
+            cut_btn_row, text=t("tab2_btn_edit_sample"),
             bg="#1F618D", fg="white", font=("DejaVu Sans", 8, "bold"),
             command=self.open_selected_sample_cutoff_editor_modal
-        ).pack(side="left", expand=True, fill="x", padx=1)
-        tk.Button(
-            cut_btn_row, text="📋 Exportar Cut-Offs (.csv)",
+        )
+        self.btn_tab2_edit_sample.pack(side="left", expand=True, fill="x", padx=1)
+        self.btn_tab2_export_cutoffs = tk.Button(
+            cut_btn_row, text=t("tab2_btn_export_csv"),
             bg="#117864", fg="white", font=("DejaVu Sans", 8, "bold"),
             command=self.export_sample_cutoffs_csv
-        ).pack(side="left", expand=True, fill="x", padx=1)
-        tk.Button(
-            cut_btn_row, text="🧬 Panel Categórico ➔",
+        )
+        self.btn_tab2_export_cutoffs.pack(side="left", expand=True, fill="x", padx=1)
+        self.btn_tab2_goto_cat = tk.Button(
+            cut_btn_row, text=t("tab2_btn_go_cat"),
             bg="#004488", fg="white", font=("DejaVu Sans", 8, "bold"),
             command=lambda: self.notebook.select(self.tab_catpanel)
-        ).pack(side="left", expand=True, fill="x", padx=1)
+        )
+        self.btn_tab2_goto_cat.pack(side="left", expand=True, fill="x", padx=1)
 
         right_panel = ttk.PanedWindow(paned, orient="vertical")
         paned.add(right_panel, weight=1)
@@ -995,57 +1262,63 @@ class FlowCytometryKineticWorkstation:
     # PESTAÑA 3: PANEL DE ANÁLISIS DE PROPORCIONES CATEGÓRICAS Y VENTANAS DE TIEMPO
     # --------------------------------------------------------------------------
     def _build_tab_categorical_panel(self):
-        ctrl_cat = ttk.LabelFrame(
+        self.lblfrm_tab3_ctrl = ttk.LabelFrame(
             self.tab_catpanel,
-            text=" Configuración del Panel Categórico: Proporciones Afectados (V2L) vs. No Afectados (V2R), Ventanas de Tiempo, T50, T_efecto_máx y Pruebas de Afectación ",
+            text=t("tab3_ctrl_title"),
             padding=7
         )
-        ctrl_cat.pack(fill="x", padx=10, pady=4)
+        self.lblfrm_tab3_ctrl.pack(fill="x", padx=10, pady=4)
 
-        ttk.Label(ctrl_cat, text="Compuesto:").grid(row=0, column=0, sticky="w", padx=4, pady=2)
-        self.var_cat_pep = tk.StringVar(value="Todos")
-        self.cmb_cat_pep = ttk.Combobox(ctrl_cat, textvariable=self.var_cat_pep, state="readonly", width=18, values=["Todos"])
+        self.lbl_tab3_pep = ttk.Label(self.lblfrm_tab3_ctrl, text=t("tab3_compound"))
+        self.lbl_tab3_pep.grid(row=0, column=0, sticky="w", padx=4, pady=2)
+        self.var_cat_pep = tk.StringVar(value=t("tab3_opt_all_compounds"))
+        self.cmb_cat_pep = ttk.Combobox(self.lblfrm_tab3_ctrl, textvariable=self.var_cat_pep, state="readonly", width=18, values=[t("tab3_opt_all_compounds")])
         self.cmb_cat_pep.grid(row=0, column=1, sticky="w", padx=4, pady=2)
         self.cmb_cat_pep.bind("<<ComboboxSelected>>", lambda e: self.update_categorical_panel_view())
 
-        ttk.Label(ctrl_cat, text="Línea Celular:").grid(row=0, column=2, sticky="w", padx=4, pady=2)
-        self.var_cat_cell = tk.StringVar(value="Todas")
-        self.cmb_cat_cell = ttk.Combobox(ctrl_cat, textvariable=self.var_cat_cell, state="readonly", width=14, values=["Todas", "THP-1", "PBMCs"])
+        self.lbl_tab3_cell = ttk.Label(self.lblfrm_tab3_ctrl, text=t("tab3_cell_line"))
+        self.lbl_tab3_cell.grid(row=0, column=2, sticky="w", padx=4, pady=2)
+        self.var_cat_cell = tk.StringVar(value=t("tab3_opt_all_cells"))
+        self.cmb_cat_cell = ttk.Combobox(self.lblfrm_tab3_ctrl, textvariable=self.var_cat_cell, state="readonly", width=14, values=[t("tab3_opt_all_cells"), "THP-1", "PBMCs"])
         self.cmb_cat_cell.grid(row=0, column=3, sticky="w", padx=4, pady=2)
         self.cmb_cat_cell.bind("<<ComboboxSelected>>", lambda e: self.update_categorical_panel_view())
 
-        ttk.Label(ctrl_cat, text="Curva Destacada:").grid(row=0, column=4, sticky="w", padx=4, pady=2)
+        self.lbl_tab3_curve = ttk.Label(self.lblfrm_tab3_ctrl, text=t("tab3_curve"))
+        self.lbl_tab3_curve.grid(row=0, column=4, sticky="w", padx=4, pady=2)
         self.var_cat_curve = tk.StringVar(value="")
-        self.cmb_cat_curve = ttk.Combobox(ctrl_cat, textvariable=self.var_cat_curve, state="readonly", width=28)
+        self.cmb_cat_curve = ttk.Combobox(self.lblfrm_tab3_ctrl, textvariable=self.var_cat_curve, state="readonly", width=28)
         self.cmb_cat_curve.grid(row=0, column=5, sticky="w", padx=4, pady=2)
         self.cmb_cat_curve.bind("<<ComboboxSelected>>", lambda e: self.update_categorical_panel_view())
 
-        ttk.Label(ctrl_cat, text="Visualización Gráfica:", font=("DejaVu Sans", 8, "bold")).grid(row=1, column=0, sticky="w", padx=4, pady=2)
-        self.var_cat_vis_mode = tk.StringVar(value="Balance Temporal: % Afectados (V2L) vs % No Afectados (V2R) y Hitos")
+        self.lbl_tab3_vis = ttk.Label(self.lblfrm_tab3_ctrl, text=t("tab3_vis_mode"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab3_vis.grid(row=1, column=0, sticky="w", padx=4, pady=2)
+        self.var_cat_vis_mode = tk.StringVar(value=t("tab3_vis_opt1"))
         self.cmb_cat_vis = ttk.Combobox(
-            ctrl_cat, textvariable=self.var_cat_vis_mode, state="readonly", width=56,
+            self.lblfrm_tab3_ctrl, textvariable=self.var_cat_vis_mode, state="readonly", width=56,
             values=[
-                "Balance Temporal: % Afectados (V2L) vs % No Afectados (V2R) y Hitos",
-                "Comparativa de Hitos: T_onset, T50 del Efecto y T_efecto_máx + % Máx/Mín por Dosis",
-                "Mapa de Calor Espaciotemporal: % Eventos Afectados (V2L) por Compuesto, Dosis y Tiempo",
-                "Velocidad Instantánea de Conversión d(%V2L)/dt y Entropía de Shannon H(t)"
+                t("tab3_vis_opt1"),
+                t("tab3_vis_opt2"),
+                t("tab3_vis_opt3"),
+                t("tab3_vis_opt4")
             ]
         )
         self.cmb_cat_vis.grid(row=1, column=1, columnspan=3, sticky="ew", padx=4, pady=2)
         self.cmb_cat_vis.bind("<<ComboboxSelected>>", lambda e: self.update_categorical_panel_view())
 
-        btn_cat_box = ttk.Frame(ctrl_cat)
+        btn_cat_box = ttk.Frame(self.lblfrm_tab3_ctrl)
         btn_cat_box.grid(row=1, column=4, columnspan=2, sticky="e", padx=4, pady=2)
-        tk.Button(
-            btn_cat_box, text="🔄 Recalcular Panel Categórico",
+        self.btn_tab3_recompute = tk.Button(
+            btn_cat_box, text=t("tab3_btn_recalc"),
             bg="#004488", fg="white", font=("DejaVu Sans", 8, "bold"),
             padx=8, command=self.recompute_all_models_and_tables
-        ).pack(side="left", padx=3)
-        tk.Button(
-            btn_cat_box, text="📄 Exportar en Reporte Final ➔",
+        )
+        self.btn_tab3_recompute.pack(side="left", padx=3)
+        self.btn_tab3_goto_final = tk.Button(
+            btn_cat_box, text=t("tab3_btn_export_report"),
             bg="#117733", fg="white", font=("DejaVu Sans", 8, "bold"),
             padx=8, command=lambda: self.notebook.select(self.tab_finalreport)
-        ).pack(side="left", padx=3)
+        )
+        self.btn_tab3_goto_final.pack(side="left", padx=3)
 
         cat_paned = ttk.PanedWindow(self.tab_catpanel, orient="vertical")
         cat_paned.pack(fill="both", expand=True, padx=10, pady=4)
@@ -1053,21 +1326,21 @@ class FlowCytometryKineticWorkstation:
         self.cat_prop_canvas = NativeCategoricalProportionsCanvas(cat_paned)
         cat_paned.add(self.cat_prop_canvas, weight=2)
 
-        cat_nb = ttk.Notebook(cat_paned)
-        cat_paned.add(cat_nb, weight=3)
+        self.cat_nb = ttk.Notebook(cat_paned)
+        cat_paned.add(self.cat_nb, weight=3)
 
         self.tree_cat_milestones = self._create_dynamic_treeview(
-            cat_nb, " 1. Hitos del Efecto (% Afectados Máx/Mín, T_efecto_máx, T50 Efecto, LT50 y Definición de Afectación) "
+            self.cat_nb, t("tab3_subtab_milestones")
         )
         self.tree_cat_windows = self._create_dynamic_treeview(
-            cat_nb, " 2. Proporciones por Ventana de Tiempo (Afectados V2L vs No Afectados V2R, IC95%, Odds y Fisher/Chi²) "
+            self.cat_nb, t("tab3_subtab_windows")
         )
         self.tree_cat_tests = self._create_dynamic_treeview(
-            cat_nb, " 3. Pruebas Estadísticas (Tendencia Cochran-Armitage, Log-Rank, Isocronas EC50(t) y Contrastes) "
+            self.cat_nb, t("tab3_subtab_tests")
         )
 
-        frm_insights = ttk.Frame(cat_nb, padding=6)
-        cat_nb.add(frm_insights, text=" 4. Interpretación Biofísica Automática y Análisis Sugeridos del Fenómeno ")
+        frm_insights = ttk.Frame(self.cat_nb, padding=6)
+        self.cat_nb.add(frm_insights, text=t("tab3_subtab_insights"))
         self.txt_cat_insights = tk.Text(frm_insights, wrap="word", font=("Courier", 9), bg="#F8F9FA")
         vsb_ins = ttk.Scrollbar(frm_insights, orient="vertical", command=self.txt_cat_insights.yview)
         self.txt_cat_insights.configure(yscrollcommand=vsb_ins.set)
@@ -1085,13 +1358,13 @@ class FlowCytometryKineticWorkstation:
         win_sub = self.df_cat_time_windows.copy()
         tst_sub = self.df_cat_hypothesis_tests.copy()
 
-        if pep_sel and pep_sel != "Todos":
+        if pep_sel and pep_sel not in ("Todos", "All", ""):
             sum_sub = sum_sub[sum_sub['Peptide'] == pep_sel]
             win_sub = win_sub[win_sub['Peptide'] == pep_sel]
             if not tst_sub.empty and 'Peptide' in tst_sub.columns:
                 tst_sub = tst_sub[tst_sub['Peptide'].astype(str).str.contains(pep_sel, regex=False)]
 
-        if cell_sel and cell_sel != "Todas":
+        if cell_sel and cell_sel not in ("Todas", "All", ""):
             sum_sub = sum_sub[sum_sub['Cell_Line'] == cell_sel]
             win_sub = win_sub[win_sub['Cell_Line'] == cell_sel]
 
@@ -1117,17 +1390,18 @@ class FlowCytometryKineticWorkstation:
     # PESTAÑA 4: PRE-REPORTE, SELECCIÓN DE MODELOS CINÉTICOS Y ESTADÍSTICA
     # --------------------------------------------------------------------------
     def _build_tab3_prereport(self):
-        ctrl_bar = ttk.LabelFrame(
+        self.lblfrm_tab4_ctrl = ttk.LabelFrame(
             self.tab_prereport,
-            text=" Configuración de Analizadores Cinéticos / Farmacodinámicos y Diseño de Comparación Estadística ",
+            text=t("tab4_ctrl_title"),
             padding=8
         )
-        ctrl_bar.pack(fill="x", padx=10, pady=5)
+        self.lblfrm_tab4_ctrl.pack(fill="x", padx=10, pady=5)
 
-        ttk.Label(ctrl_bar, text="Analizador Cinético / Modelo:").grid(row=0, column=0, sticky="w", padx=4, pady=2)
+        self.lbl_tab4_analyzer = ttk.Label(self.lblfrm_tab4_ctrl, text=t("tab4_analyzer"))
+        self.lbl_tab4_analyzer.grid(row=0, column=0, sticky="w", padx=4, pady=2)
         self.var_kinetic_analyzer = tk.StringVar(value="Allosteric Hill (Regularizado nH <= 6.0)")
         self.cmb_analyzer = ttk.Combobox(
-            ctrl_bar, textvariable=self.var_kinetic_analyzer, state="readonly", width=36,
+            self.lblfrm_tab4_ctrl, textvariable=self.var_kinetic_analyzer, state="readonly", width=36,
             values=[
                 "Allosteric Hill (Regularizado nH <= 6.0)",
                 "Michaelis-Menten Hiperbólico (nH = 1.0)",
@@ -1139,10 +1413,11 @@ class FlowCytometryKineticWorkstation:
         self.cmb_analyzer.grid(row=0, column=1, sticky="w", padx=4, pady=2)
         self.cmb_analyzer.bind("<<ComboboxSelected>>", lambda e: self.recompute_all_models_and_tables())
 
-        ttk.Label(ctrl_bar, text="Modo de Comparación Estadística:").grid(row=0, column=2, sticky="w", padx=4, pady=2)
+        self.lbl_tab4_stat_mode = ttk.Label(self.lblfrm_tab4_ctrl, text=t("tab4_stat_mode"))
+        self.lbl_tab4_stat_mode.grid(row=0, column=2, sticky="w", padx=4, pady=2)
         self.var_stat_mode = tk.StringVar(value="Vs. Control Basal (0 µM) y Línea Control Sano")
         self.cmb_stat_mode = ttk.Combobox(
-            ctrl_bar, textvariable=self.var_stat_mode, state="readonly", width=36,
+            self.lblfrm_tab4_ctrl, textvariable=self.var_stat_mode, state="readonly", width=36,
             values=[
                 "Vs. Control Basal (0 µM) y Línea Control Sano",
                 "Entre Compuestos (a Dosis Equivalentes / Orden de Potencia)",
@@ -1153,120 +1428,110 @@ class FlowCytometryKineticWorkstation:
         self.cmb_stat_mode.grid(row=0, column=3, sticky="w", padx=4, pady=2)
         self.cmb_stat_mode.bind("<<ComboboxSelected>>", lambda e: self.recompute_all_models_and_tables())
 
-        ttk.Label(ctrl_bar, text="Corrección Múltiple:").grid(row=1, column=0, sticky="w", padx=4, pady=2)
+        self.lbl_tab4_fdr = ttk.Label(self.lblfrm_tab4_ctrl, text=t("tab4_fdr"))
+        self.lbl_tab4_fdr.grid(row=1, column=0, sticky="w", padx=4, pady=2)
         self.var_fdr_method = tk.StringVar(value="Benjamini-Hochberg (FDR)")
         self.cmb_fdr = ttk.Combobox(
-            ctrl_bar, textvariable=self.var_fdr_method, state="readonly", width=28,
+            self.lblfrm_tab4_ctrl, textvariable=self.var_fdr_method, state="readonly", width=28,
             values=["Benjamini-Hochberg (FDR)", "Holm-Bonferroni", "Sin ajuste (Welch p directo)"]
         )
         self.cmb_fdr.grid(row=1, column=1, sticky="w", padx=4, pady=2)
         self.cmb_fdr.bind("<<ComboboxSelected>>", lambda e: self.recompute_all_models_and_tables())
 
-        ttk.Label(ctrl_bar, text="Réplicas Bootstrap (IC 95%):").grid(row=1, column=2, sticky="w", padx=4, pady=2)
-        self.ent_bootstrap_n = ttk.Entry(ctrl_bar, width=10)
+        self.lbl_tab4_bootstrap = ttk.Label(self.lblfrm_tab4_ctrl, text=t("tab4_bootstrap"))
+        self.lbl_tab4_bootstrap.grid(row=1, column=2, sticky="w", padx=4, pady=2)
+        self.ent_bootstrap_n = ttk.Entry(self.lblfrm_tab4_ctrl, width=10)
         self.ent_bootstrap_n.insert(0, "200")
         self.ent_bootstrap_n.grid(row=1, column=3, sticky="w", padx=4, pady=2)
 
-        tk.Button(
-            ctrl_bar, text="🔄 Recalcular Modelos y Tablas",
+        self.btn_tab4_recompute = tk.Button(
+            self.lblfrm_tab4_ctrl, text=t("tab4_btn_recalc"),
             bg="#004488", fg="white", font=("DejaVu Sans", 9, "bold"),
             padx=10, command=self.recompute_all_models_and_tables
-        ).grid(row=0, column=4, padx=6, pady=2)
+        )
+        self.btn_tab4_recompute.grid(row=0, column=4, padx=6, pady=2)
 
-        tk.Button(
-            ctrl_bar, text="❓ Explicación del Modelo y Ecuaciones",
+        self.btn_tab4_explain = tk.Button(
+            self.lblfrm_tab4_ctrl, text=t("tab4_btn_explain"),
             bg="#6C3483", fg="white", font=("DejaVu Sans", 8, "bold"),
             padx=8, command=lambda: self.open_mathematical_models_help_dialog(initial_tab=0)
-        ).grid(row=1, column=4, padx=6, pady=2)
+        )
+        self.btn_tab4_explain.grid(row=1, column=4, padx=6, pady=2)
 
         mid_paned = ttk.PanedWindow(self.tab_prereport, orient="horizontal")
         mid_paned.pack(fill="both", expand=True, padx=10, pady=4)
 
-        tbl_notebook = ttk.Notebook(mid_paned)
-        mid_paned.add(tbl_notebook, weight=3)
+        self.tbl_notebook = ttk.Notebook(mid_paned)
+        mid_paned.add(self.tbl_notebook, weight=3)
 
-        self.tree_t0 = self._create_dynamic_treeview(tbl_notebook, "Tabla 0: Prerregistro Pre-Análisis")
-        self.tree_t1 = self._create_dynamic_treeview(tbl_notebook, "Tabla 1: Tasa 0-120s")
-        self.tree_t2 = self._create_dynamic_treeview(tbl_notebook, "Tabla 2: Tasa 0-600s")
-        self.tree_t3 = self._create_dynamic_treeview(tbl_notebook, "Tabla 3: V_active [T_lag-T_max]")
-        self.tree_tcat = self._create_dynamic_treeview(tbl_notebook, "Tabla Cat: Cut-Off V2L%, LT50, Entropía y Modo")
-        self.tree_t4 = self._create_dynamic_treeview(tbl_notebook, "Tabla 4: Selectividad y Odds Ratio")
-        self.tree_t5 = self._create_dynamic_treeview(tbl_notebook, "Tabla 5: Contrastes Dinámicos / Dosis")
-        self.tree_t6 = self._create_dynamic_treeview(tbl_notebook, "Tabla 6: Parámetros del Modelo (Hill / Otros)")
-        self.tree_ttimebin = self._create_dynamic_treeview(tbl_notebook, "Tabla Bin: Datos por Bin de Tiempo (Diana vs Control)")
+        self.tree_t0 = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_t0"))
+        self.tree_t1 = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_t1"))
+        self.tree_t2 = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_t2"))
+        self.tree_t3 = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_t3"))
+        self.tree_tcat = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_tcat"))
+        self.tree_t4 = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_t4"))
+        self.tree_t5 = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_t5"))
+        self.tree_t6 = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_t6"))
+        self.tree_ttimebin = self._create_dynamic_treeview(self.tbl_notebook, t("tab4_subtab_ttimebin"))
 
-        sat_frame = ttk.LabelFrame(
+        self.lblfrm_tab4_sat = ttk.LabelFrame(
             mid_paned,
-            text=" 📐 Panel de Previsualización: Gráfica de la Función, Ecuación de los Modelos y R² del Grupo de Muestras ",
+            text=t("tab4_sat_title"),
             padding=4
         )
-        mid_paned.add(sat_frame, weight=2)
+        mid_paned.add(self.lblfrm_tab4_sat, weight=2)
 
-        prev_ctrl = ttk.Frame(sat_frame)
+        prev_ctrl = ttk.Frame(self.lblfrm_tab4_sat)
         prev_ctrl.pack(fill="x", padx=2, pady=2)
 
-        ttk.Label(prev_ctrl, text="Grupo de Muestras:", font=("DejaVu Sans", 8, "bold")).pack(side="left", padx=2)
-        self.var_preview_group = tk.StringVar(value="Todos los Grupos")
+        self.lbl_tab4_prev_group = ttk.Label(prev_ctrl, text=t("tab4_sample_group"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab4_prev_group.pack(side="left", padx=2)
+        self.var_preview_group = tk.StringVar(value=t("tab4_all_groups"))
         self.cmb_preview_group = ttk.Combobox(
             prev_ctrl, textvariable=self.var_preview_group, state="readonly", width=22,
-            values=["Todos los Grupos"]
+            values=[t("tab4_all_groups")]
         )
         self.cmb_preview_group.pack(side="left", padx=2)
         self.cmb_preview_group.bind("<<ComboboxSelected>>", lambda e: self.recompute_all_models_and_tables())
 
-        ttk.Label(prev_ctrl, text="Vista:", font=("DejaVu Sans", 8, "bold")).pack(side="left", padx=2)
-        self.var_preview_mode = tk.StringVar(value="Modelo Seleccionado (Por Grupo)")
+        self.lbl_tab4_prev_mode = ttk.Label(prev_ctrl, text=t("tab4_view"), font=("DejaVu Sans", 8, "bold"))
+        self.lbl_tab4_prev_mode.pack(side="left", padx=2)
+        self.var_preview_mode = tk.StringVar(value=t("tab4_view_selected"))
         self.cmb_preview_mode = ttk.Combobox(
             prev_ctrl, textvariable=self.var_preview_mode, state="readonly", width=28,
             values=[
-                "Modelo Seleccionado (Por Grupo)",
-                "Comparar Todos los Modelos en el Grupo"
+                t("tab4_view_selected"),
+                t("tab4_view_compare")
             ]
         )
         self.cmb_preview_mode.pack(side="left", fill="x", expand=True, padx=2)
         self.cmb_preview_mode.bind("<<ComboboxSelected>>", lambda e: self.recompute_all_models_and_tables())
 
-        self.sat_preview = NativeSaturationPreview(sat_frame)
+        self.sat_preview = NativeSaturationPreview(self.lblfrm_tab4_sat)
         self.sat_preview.pack(fill="both", expand=True, pady=2)
 
-        eq_tbl_frame = ttk.LabelFrame(
-            sat_frame,
-            text=" Ecuación Parametrizada de la Función y Bondad de Ajuste (R² del Grupo de Muestras) ",
+        self.lblfrm_tab4_eq = ttk.LabelFrame(
+            self.lblfrm_tab4_sat,
+            text=t("tab4_eq_title"),
             padding=2
         )
-        eq_tbl_frame.pack(fill="x", pady=2)
+        self.lblfrm_tab4_eq.pack(fill="x", pady=2)
 
         eq_cols = ("Grupo", "Modelo", "Ecuacion_Evaluada", "R2_Grupo", "R2_Replicas", "R2_Adj", "RMSE")
-        self.tree_model_eq_r2 = ttk.Treeview(eq_tbl_frame, columns=eq_cols, show="headings", height=4, selectmode="browse")
+        self.tree_model_eq_r2 = ttk.Treeview(self.lblfrm_tab4_eq, columns=eq_cols, show="headings", height=4, selectmode="browse")
         eq_col_specs = [
-            ("Grupo", "Grupo de Muestras", 125, "w"),
-            ("Modelo", "Modelo", 115, "w"),
-            ("Ecuacion_Evaluada", "Ecuación Evaluada de la Función f(x)", 245, "w"),
-            ("R2_Grupo", "R² Grupo (Medias)", 95, "center"),
-            ("R2_Replicas", "R² Réplicas (Todas)", 98, "center"),
-            ("R2_Adj", "R² Ajustado", 75, "center"),
-            ("RMSE", "RMSE", 62, "center")
+            ("Grupo", t("tab4_col_group"), 85, "w"),
+            ("Modelo", t("tab4_col_model"), 130, "w"),
+            ("Ecuacion_Evaluada", t("tab4_col_eq"), 170, "w"),
+            ("R2_Grupo", t("tab4_col_r2_group"), 65, "center"),
+            ("R2_Replicas", t("tab4_col_r2_reps"), 70, "center"),
+            ("R2_Adj", t("tab4_col_r2_adj"), 65, "center"),
+            ("RMSE", t("tab4_col_rmse"), 60, "center")
         ]
-        for cid, h_txt, w_px, anc in eq_col_specs:
-            self.tree_model_eq_r2.heading(cid, text=h_txt)
-            self.tree_model_eq_r2.column(cid, width=w_px, anchor=anc, stretch=(cid == "Ecuacion_Evaluada"))
-
-        vsb_eq = ttk.Scrollbar(eq_tbl_frame, orient="vertical", command=self.tree_model_eq_r2.yview)
-        hsb_eq = ttk.Scrollbar(eq_tbl_frame, orient="horizontal", command=self.tree_model_eq_r2.xview)
-        self.tree_model_eq_r2.configure(yscrollcommand=vsb_eq.set, xscrollcommand=hsb_eq.set)
-        self.tree_model_eq_r2.grid(row=0, column=0, sticky="nsew")
-        vsb_eq.grid(row=0, column=1, sticky="ns")
-        hsb_eq.grid(row=1, column=0, sticky="ew")
-        eq_tbl_frame.rowconfigure(0, weight=1)
-        eq_tbl_frame.columnconfigure(0, weight=1)
-
-        self.lbl_model_preview_summary = tk.Label(
-            sat_frame,
-            text="Modelo Activo: Allosteric Hill | Ecuación: V_active(C) = V_max·C^nH / (Kd^nH + C^nH)",
-            bg="#EBF5FB", fg="#002B49", font=("DejaVu Sans", 8, "bold"),
-            relief="groove", pady=4, justify="left"
-        )
-        self.lbl_model_preview_summary.pack(fill="x", pady=2)
+        for cid, htxt, wpx, anc in eq_col_specs:
+            self.tree_model_eq_r2.heading(cid, text=htxt)
+            self.tree_model_eq_r2.column(cid, width=wpx, anchor=anc)
+        self.tree_model_eq_r2.pack(fill="x", expand=True)
 
     def _create_dynamic_treeview(self, parent_notebook, tab_title):
         frame = ttk.Frame(parent_notebook, padding=4)
@@ -1303,51 +1568,56 @@ class FlowCytometryKineticWorkstation:
     # PESTAÑA 4: REPORTE FINAL Y EXPORTACIÓN (600 DPI + PDF POR CATEGORÍAS)
     # --------------------------------------------------------------------------
     def _build_tab4_finalreport(self):
-        top_f = ttk.LabelFrame(
+        self.lblfrm_tab5_top = ttk.LabelFrame(
             self.tab_finalreport,
-            text=" Configuración de Exportación del Reporte Auditable por Categorías (600 DPI PNG + CSV/TSV + PDF) ",
+            text=t("tab5_top_title"),
             padding=10
         )
-        top_f.pack(fill="x", padx=12, pady=8)
+        self.lblfrm_tab5_top.pack(fill="x", padx=12, pady=8)
 
-        ttk.Label(top_f, text="Carpeta de Destino:").grid(row=0, column=0, sticky="w", padx=5, pady=4)
-        self.ent_outdir = ttk.Entry(top_f, width=58)
+        self.lbl_tab5_outdir = ttk.Label(self.lblfrm_tab5_top, text=t("tab5_outdir"))
+        self.lbl_tab5_outdir.grid(row=0, column=0, sticky="w", padx=5, pady=4)
+        self.ent_outdir = ttk.Entry(self.lblfrm_tab5_top, width=58)
         self.ent_outdir.insert(0, str(Path.cwd() / "Resultados_Cinetica_Calceina"))
         self.ent_outdir.grid(row=0, column=1, sticky="w", padx=5, pady=4)
-        ttk.Button(top_f, text="Examinar...", command=self.select_outdir).grid(row=0, column=2, padx=5, pady=4)
+        self.btn_tab5_browse = ttk.Button(self.lblfrm_tab5_top, text=t("tab5_btn_browse"), command=self.select_outdir)
+        self.btn_tab5_browse.grid(row=0, column=2, padx=5, pady=4)
 
-        ttk.Label(top_f, text="Título del Reporte PDF:").grid(row=1, column=0, sticky="w", padx=5, pady=4)
-        self.ent_rep_title = ttk.Entry(top_f, width=58)
+        self.lbl_tab5_rep_title = ttk.Label(self.lblfrm_tab5_top, text=t("tab5_rep_title"))
+        self.lbl_tab5_rep_title.grid(row=1, column=0, sticky="w", padx=5, pady=4)
+        self.ent_rep_title = ttk.Entry(self.lblfrm_tab5_top, width=58)
         self.ent_rep_title.insert(0, "The Ultimate Biostatistical Audit Report: Membrane Disruption Analytics")
         self.ent_rep_title.grid(row=1, column=1, sticky="w", padx=5, pady=4)
 
-        ttk.Label(top_f, text="Autor / Laboratorio:").grid(row=2, column=0, sticky="w", padx=5, pady=4)
-        self.ent_rep_author = ttk.Entry(top_f, width=58)
+        self.lbl_tab5_rep_author = ttk.Label(self.lblfrm_tab5_top, text=t("tab5_rep_author"))
+        self.lbl_tab5_rep_author.grid(row=2, column=0, sticky="w", padx=5, pady=4)
+        self.ent_rep_author = ttk.Entry(self.lblfrm_tab5_top, width=58)
         self.ent_rep_author.insert(0, "Flow Cytometry Biophysics & Pharmacodynamics Unit")
         self.ent_rep_author.grid(row=2, column=1, sticky="w", padx=5, pady=4)
 
-        tk.Button(
-            top_f,
-            text="🚀 GENERAR Y EXPORTAR REPORTE FINAL AUDITABLE (PDF CON IMÁGENES + 600 DPI + CSV/TSV)",
+        self.btn_tab5_export_bundle = tk.Button(
+            self.lblfrm_tab5_top,
+            text=t("tab5_btn_export_bundle"),
             bg="#117733", fg="white", font=("DejaVu Sans", 10, "bold"),
             padx=16, pady=8, command=self.export_final_report_bundle
-        ).grid(row=3, column=0, columnspan=3, pady=10)
+        )
+        self.btn_tab5_export_bundle.grid(row=3, column=0, columnspan=3, pady=10)
 
-        preview_f = ttk.LabelFrame(
+        self.lblfrm_tab5_preview = ttk.LabelFrame(
             self.tab_finalreport,
-            text=" Bitácora Ejecutiva del Reporte Final (El programa permanece abierto tras exportar) ",
+            text=t("tab5_preview_title"),
             padding=8
         )
-        preview_f.pack(fill="both", expand=True, padx=12, pady=6)
+        self.lblfrm_tab5_preview.pack(fill="both", expand=True, padx=12, pady=6)
 
-        self.txt_report_summary = tk.Text(preview_f, wrap="word", font=("Courier", 9), bg="#F8F9FA")
-        vsb = ttk.Scrollbar(preview_f, orient="vertical", command=self.txt_report_summary.yview)
+        self.txt_report_summary = tk.Text(self.lblfrm_tab5_preview, wrap="word", font=("Courier", 9), bg="#F8F9FA")
+        vsb = ttk.Scrollbar(self.lblfrm_tab5_preview, orient="vertical", command=self.txt_report_summary.yview)
         self.txt_report_summary.configure(yscrollcommand=vsb.set)
         self.txt_report_summary.pack(side="left", fill="both", expand=True)
         vsb.pack(side="right", fill="y")
 
     def select_outdir(self):
-        d = filedialog.askdirectory(title="Seleccionar Carpeta de Salida", parent=self.root)
+        d = filedialog.askdirectory(title=t("dialog_select_outdir"), parent=self.root)
         if d:
             self.ent_outdir.delete(0, tk.END)
             self.ent_outdir.insert(0, d)
@@ -1403,7 +1673,7 @@ class FlowCytometryKineticWorkstation:
         return sel_peps, sel_cells, sel_doses
 
     def apply_prefilter_by_current_scope(self, final=True):
-        scope = "selected" if "Discriminado" in self.var_cutoff_scope.get() else "global"
+        scope = "selected" if ("Discriminado" in self.var_cutoff_scope.get() or "Selected" in self.var_cutoff_scope.get() or "Discriminated" in self.var_cutoff_scope.get()) else "global"
         self.apply_prefilter_and_cutoffs(scope=scope, final=final, preserve_individual=(scope != "global"))
 
     def apply_new_log_cutoff(self, new_cutoff_val, new_excl_val=None, final=True):
@@ -1414,7 +1684,7 @@ class FlowCytometryKineticWorkstation:
                 self.var_log_excl_v1l.set(round(float(new_excl_val), 2))
         except ValueError:
             return
-        scope = "selected" if "Discriminado" in self.var_cutoff_scope.get() else "global"
+        scope = "selected" if ("Discriminado" in self.var_cutoff_scope.get() or "Selected" in self.var_cutoff_scope.get() or "Discriminated" in self.var_cutoff_scope.get()) else "global"
         self.apply_prefilter_and_cutoffs(scope=scope, final=final, preserve_individual=(scope != "global"))
 
     def _sync_all_samples_with_active_user_cutoffs(self):
